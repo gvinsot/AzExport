@@ -10,7 +10,7 @@ Be carefull it is not complete, it does a global export but may need adjustment 
 
 ***Usage:***
 
-**AzJson -ClientId <client id> -ClientSecret <client secret> -AuthorizationEndpoint <https://login.microsoftonline.com/{Azure AD tenant ID}/> -SubscriptionId <subscription id> [-DownloadPath <D:\temp\>] [-ZipResult true]**
+    AzExport -ClientId <client id> -ClientSecret <client secret> -AuthorizationEndpoint <https://login.microsoftonline.com/{Azure AD tenant ID}/> -SubscriptionId <subscription id> [-DownloadPath <D:\temp\>] [-ZipResult true]
 
 You can also edit the App.Config file to input Client Id, Client Secret, SubscriptionId and AuthorizationEnpoint.
 The program provides following output on console :
