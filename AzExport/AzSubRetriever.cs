@@ -1,17 +1,12 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 
 /*
@@ -25,7 +20,7 @@ using System.Threading.Tasks;
  * that arise or result from the use or distribution of the Sample Code
  */
 
-namespace AzJson
+namespace AzExport
 {
     public class AzSubRetriever
     {

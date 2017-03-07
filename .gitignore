@@ -1,0 +1,6 @@
+/.vs/AzExport/v14/*.suo
+/.vs/AzJson/v14/*.suo
+/.vs/AzJson/v15/*.suo
+/AzExport/bin/Debug
+/AzExport/obj/Debug
+/packages

@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+
+    <h1>AppPak ReadMe</h1>
+    <p>
+        AppPak has not been added to this project. Referenced DLL&#39;s will now be added to 
+        your exe file as a resource. In order for AppPak to work you will need to modify 
+        your code.
+    </p>
+    <p>
+        In your Program Main method you need to add the following code as the first code 
+        to be run. This will allow the dll&#39;s to be extracted from the resources and 
+        loaded.</p>
+    <p style="margin-left: 40px">
+        AppPakCodeGenerator.AppUnPak unpak=new AppPakCodeGenerator.AppUnPak();</p>
+    <h2>Example Main Function</h2>
+    <p>
+        using System;<br />
+        namespace TestApp<br />
+        {<br />
+            &nbsp;&nbsp;&nbsp;
+            public class MyAppClass<br />
+            &nbsp;&nbsp;&nbsp;
+            {<br /> 
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+                [STAThread()]<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                public MyAppClass()<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                {<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; using(AppPakCodeGenerator.AppUnPak unpak=new AppPakCodeGenerator.AppUnPak())<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    {<br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        // your code goes here.<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    }<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                }<br />
+            &nbsp;&nbsp;&nbsp;
+            }<br />
+        }<br />
+    </p>
+    <p>
+        &nbsp;</p>
+    <p>
+        &nbsp;</p>
+
+</body>
+</html>

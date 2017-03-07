@@ -1,12 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Configuration;
 
 /*
@@ -20,7 +13,7 @@ using System.Configuration;
  * that arise or result from the use or distribution of the Sample Code
  */
 
-namespace AzJson
+namespace AzExport
 {
     class Program
     {
@@ -94,7 +87,7 @@ namespace AzJson
         {
             Console.WriteLine("Bad Arguments");
             Console.WriteLine("Usage:");
-            Console.WriteLine("AzJson -ClientId <client id> -ClientSecret <client secret> -AuthorizationEndpoint <https://login.microsoftonline.com/{Azure AD tenant ID}/> -SubscriptionId <subscription id> [-DownloadPath <D:\\temp\\>] [-ZipResult true]");
+            Console.WriteLine("AzExport -ClientId <client id> -ClientSecret <client secret> -AuthorizationEndpoint <https://login.microsoftonline.com/{Azure AD tenant ID}/> -SubscriptionId <subscription id> [-DownloadPath <D:\\temp\\>] [-ZipResult true]");
         }
 
 
