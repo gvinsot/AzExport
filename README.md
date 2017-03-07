@@ -24,3 +24,7 @@ The principle of this program is to explore all resources through Azure Rest API
 The full Azure Api documentation can be found here : [https://docs.microsoft.com/en-us/rest/api/](https://docs.microsoft.com/en-us/rest/api/)
 The swagger definitions of Azure Apis are here : [https://github.com/Azure/azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs)
 
+
+[DOWNLOAD NOW](https://github.com/gvinsot/AzExport/releases)
+
+
