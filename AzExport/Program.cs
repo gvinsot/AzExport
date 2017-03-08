@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Configuration;
+using System.Reflection;
+using System.IO;
 
 /*
  * Sample Code is provided for the purpose of illustration only and is not intended to be used in a production environment. 
@@ -20,6 +22,12 @@ namespace AzExport
         
         static void Main(string[] args)
         {
+            LoadEmbbededAssembly("Microsoft.IdentityModel.Clients.ActiveDirectory.dll");
+            LoadEmbbededAssembly("Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll");
+            LoadEmbbededAssembly("Microsoft.WindowsAzure.Configuration.dll");
+            LoadEmbbededAssembly("Newtonsoft.Json.dll");
+
+
             string downloadPath = ".\\";
             bool zipResult = false;
             bool providersMode = false;
@@ -90,6 +98,36 @@ namespace AzExport
             Console.WriteLine("AzExport -ClientId <client id> -ClientSecret <client secret> -AuthorizationEndpoint <https://login.microsoftonline.com/{Azure AD tenant ID}/> -SubscriptionId <subscription id> [-DownloadPath <D:\\temp\\>] [-ZipResult true]");
         }
 
+        static void LoadEmbbededAssembly(string name)
+        {
+            String resourceName = "AzExport." +  name;
+            //using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
+            //{
+            //    Byte[] assemblyData = new Byte[stream.Length];
+            //    stream.Read(assemblyData, 0, assemblyData.Length);
+            //    //Assembly.Load(assemblyData);
+            //    File.WriteAllBytes(name, assemblyData);
+            //}
+            AppDomain.CurrentDomain.AssemblyResolve +=
+              (sender, args) =>
+              {
+                  var an = new AssemblyName(args.Name);
+                  if (an.Name+".dll" == name)
+                  {
+                      Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
+                      if (stream != null)
+                      {
+                          using (stream)
+                          {
+                              byte[] data = new byte[stream.Length];
+                              stream.Read(data, 0, data.Length);
+                              return Assembly.Load(data);
+                          }
+                      }
+                  }
+                  return null;
+              };
+        }
 
     }
 }

@@ -216,7 +216,7 @@ namespace AzExport
                     GetAzureResource(result, resId + "/virtualNetworkPeerings", accessToken, apiVersion, saveToDisk);
                     break;
                 case "microsoft.operationalinsights/workspaces":
-                    GetAzureResource(result, resId + "/linkedServices", accessToken, apiVersion, saveToDisk);
+                    //GetAzureResource(result, resId + "/linkedServices", accessToken, apiVersion, saveToDisk);
                     
                     //TODO : loop on workspaces to retrieve workspace configuration                    
                     break;
