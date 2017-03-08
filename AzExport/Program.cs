@@ -101,13 +101,7 @@ namespace AzExport
         static void LoadEmbbededAssembly(string name)
         {
             String resourceName = "AzExport." +  name;
-            //using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
-            //{
-            //    Byte[] assemblyData = new Byte[stream.Length];
-            //    stream.Read(assemblyData, 0, assemblyData.Length);
-            //    //Assembly.Load(assemblyData);
-            //    File.WriteAllBytes(name, assemblyData);
-            //}
+            
             AppDomain.CurrentDomain.AssemblyResolve +=
               (sender, args) =>
               {
