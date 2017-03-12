@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 
 
@@ -54,7 +56,7 @@ namespace AzExport
 
             Console.WriteLine(providers.Count() + " resource providers");
            
-            Dictionary<string, string> resourcesTypeApiVersion = new Dictionary<string, string>();
+            Dictionary<string, ProviderInformation> resourcesInformation = new Dictionary<string, ProviderInformation>();
             foreach (var provider in providers)
             {
                 string providerId = provider.id;
@@ -62,16 +64,64 @@ namespace AzExport
                 var resourceTypes = providersResourceTypes.Values<dynamic>() as IEnumerable<dynamic>; ;
                 foreach (var resourceType in resourceTypes)
                 {
-                    string resourceTypeKey = ($"{providerId}/" + resourceType.resourceType).ToLower();
-                    resourcesTypeApiVersion.Add(resourceTypeKey, (resourceType.apiVersions.Values<dynamic>() as IEnumerable<dynamic>).First().Value);
+                    string resourceTypeKey = ($"{providerId}/{resourceType.resourceType}").ToLower();
+                    resourcesInformation.Add(resourceTypeKey, new ProviderInformation()
+                    {
+                        ApiVersion = (resourceType.apiVersions.Values<dynamic>() as IEnumerable<dynamic>).First().Value,
+                        Name = resourceTypeKey,
+                        Namespace = provider.@namespace.ToString()                 
+                    });
+                }
+                try
+                {
+                    var providerDetails = GetAzureResource(result, "/providers/Microsoft.Authorization/providerOperations/" + provider.@namespace.ToString(), accessToken, "2015-07-01&$expand=resourceTypes", saveToDisk);
+                    var resourceTypesDetails = providerDetails.resourceTypes.Values<dynamic>() as IEnumerable<dynamic>;
+
+                    foreach (var resourceTypeDetail in resourceTypesDetails)
+                    {
+                        var operations = resourceTypeDetail.operations.Values<dynamic>() as IEnumerable<dynamic>;
+                        foreach (var operation in operations)
+                        {
+                            var operationDetails = (operation.name.Value as string).Split('/');
+                             if (operationDetails.Length>3 && operationDetails.Last()=="read")
+                            {
+                                StringBuilder operationName = new StringBuilder();
+                                for(int i=2;i<operationDetails.Length-1;i++)
+                                {
+                                    operationName.Append("/").Append(operationDetails[i]);
+                                }
+                                var key = providersUrl + "/"+ operationDetails[0].ToLower() + "/"+ operationDetails[1].ToLower();
+                                if (resourcesInformation.ContainsKey(key))
+                                {
+                                    resourcesInformation[key].ReadOperations.Add(operationName.ToString());
+                                }
+                            }
+                        }
+                    }
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine("Cannot retrieve operations for: " + provider.@namespace.ToString());
                 }
             }
-            Console.WriteLine(resourcesTypeApiVersion.Count() + " resource types");
+            Console.WriteLine(resourcesInformation.Count() + " resource types");
             #endregion
             
             #region retrieve all resources
             dynamic resourceGroupsResult = GetAzureResource(result, $"{subscriptionResourceId}/resourcegroups", accessToken, providersVersion, saveToDisk).value;
             var resourceGroups = resourceGroupsResult.Values<dynamic>() as IEnumerable<dynamic>;
+
+
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/roleassignments", resourcesInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/roledefinitions", resourcesInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/classicadministrators", resourcesInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/permissions", resourcesInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/locks", resourcesInformation, providersVersion, accessToken, saveToDisk);
+//            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/operations", resourcesTypeApiVersion, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/policyassignments", resourcesInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/policydefinitions", resourcesInformation, providersVersion, accessToken, saveToDisk);
+//            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/provideroperations", resourcesTypeApiVersion, providersVersion, accessToken, saveToDisk);
+
 
             Console.WriteLine(resourceGroups.Count() + " resources groups");
 
@@ -84,19 +134,43 @@ namespace AzExport
 
                     System.Console.WriteLine(resources.Count() + " resources in " + rg.name);
 
+                    // Export template
+                    GetAzureResource(result, rg.id.Value + "/exportTemplate", accessToken, providersVersion, saveToDisk, "POST", "{\"resources\":[\"*\"]}");
+
                     resources.AsParallel().ForAll(res =>
                     {
                         string resourceId = res.id.ToString();
                         try
                         {
-                            string apiVersion = null;
+                            string apiVersion = providersVersion;
 
                             string resourceTypeKey = (providersUrl + "/" + res.type).ToLower();
 
-                            if (resourcesTypeApiVersion.ContainsKey(resourceTypeKey))
-                                apiVersion = resourcesTypeApiVersion[resourceTypeKey];
+                            ProviderInformation info = null;
+
+                            if (resourcesInformation.ContainsKey(resourceTypeKey))
+                            {
+                                info = resourcesInformation[resourceTypeKey];
+                                apiVersion = info.ApiVersion;
+                            }
 
                             GetAzureResource(result, resourceId, accessToken, apiVersion, saveToDisk);
+                            
+                            if(info!=null)
+                            {
+                                foreach(var readOperation in info.ReadOperations)
+                                {
+                                    try
+                                    {
+                                        GetAzureResource(result, resourceId + readOperation, accessToken, apiVersion, saveToDisk);
+                                    }
+                                    catch(Exception ex)
+                                    {
+                                        Trace.TraceWarning("Warning: Cannot export " + resourceId + readOperation);
+                                        //maybe parameter was expected...
+                                    }
+                                }
+                            }
 
                             ExportSpecificConfigurations(saveToDisk, res, accessToken, result, apiVersion, res.type.ToString().ToLower());
 
@@ -170,12 +244,12 @@ namespace AzExport
                 
                 case "microsoft.web/sites": // Code specific for web apps                   
                     GetAzureResource(result, resId + "/config/appsettings/list", accessToken, apiVersion, saveToDisk, "POST");
-                    GetAzureResource(result, resId + "/config/authsettings/list", accessToken, apiVersion, saveToDisk, "POST");                    
+                    GetAzureResource(result, resId + "/config/authsettings/list", accessToken, apiVersion, saveToDisk, "POST");
                     GetAzureResource(result, resId + "/config/connectionstrings/list", accessToken, apiVersion, saveToDisk, "POST");
                     GetAzureResource(result, resId + "/config/logs", accessToken, apiVersion, saveToDisk);
                     GetAzureResource(result, resId + "/config/metadata/list", accessToken, apiVersion, saveToDisk, "POST");
                     GetAzureResource(result, resId + "/config/publishingcredentials/list", accessToken, apiVersion, saveToDisk, "POST");
-                    GetAzureResource(result, resId + "/config/slotConfigNames", accessToken, apiVersion, saveToDisk); 
+                    GetAzureResource(result, resId + "/config/slotConfigNames", accessToken, apiVersion, saveToDisk);
                     GetAzureResource(result, resId + "/config/web", accessToken, apiVersion, saveToDisk);
                     GetAzureResource(result, resId + "/hostNameBindings", accessToken, apiVersion, saveToDisk);
                     GetAzureResource(result, resId + "/hybridconnection", accessToken, apiVersion, saveToDisk);
@@ -217,7 +291,7 @@ namespace AzExport
                     break;
                 case "microsoft.operationalinsights/workspaces":
                     //GetAzureResource(result, resId + "/linkedServices", accessToken, apiVersion, saveToDisk);
-                    
+
                     //TODO : loop on workspaces to retrieve workspace configuration                    
                     break;
                 case "microsoft.visualstudio/account":
@@ -231,7 +305,7 @@ namespace AzExport
                 case "microsoft.streamanalytics/streamingjobs":
                     GetAzureResource(result, resId + "/functions", accessToken, apiVersion, saveToDisk);
                     GetAzureResource(result, resId + "/inputs", accessToken, apiVersion, saveToDisk);
-                    GetAzureResource(result, resId + "/outputs", accessToken, apiVersion, saveToDisk);                    
+                    GetAzureResource(result, resId + "/outputs", accessToken, apiVersion, saveToDisk);
                     break;
                 case "microsoft.datafactory/datafactories":
                     GetAzureResource(result, resId + "/datasets", accessToken, apiVersion, saveToDisk);
@@ -242,15 +316,15 @@ namespace AzExport
                     break;
                 case "microsoft.machineLearning/commitmentplans":
                     GetAzureResource(result, resId + "/commitmentAssociations", accessToken, apiVersion, saveToDisk);
-                    GetAzureResource(result, resId + "/usageHistory", accessToken, apiVersion, saveToDisk);                    
+                    GetAzureResource(result, resId + "/usageHistory", accessToken, apiVersion, saveToDisk);
                     break;
                 case "microsoft.machinelearning/webservices":
                     GetAzureResource(result, resId + "/listKeys", accessToken, apiVersion, saveToDisk);
                     break;
                 case "microsoft.recoveryservices/vaults":
                     GetAzureResource(result, resId + "/backupPolicies", accessToken, apiVersion, saveToDisk);
-                   // GetAzureResource(result, resId + "/backupProtectionContainers", accessToken, apiVersion, saveToDisk);
-                   //GetAzureResource(result, resId + "/backupJobsExport", accessToken, apiVersion, saveToDisk);
+                    // GetAzureResource(result, resId + "/backupProtectionContainers", accessToken, apiVersion, saveToDisk);
+                    //GetAzureResource(result, resId + "/backupJobsExport", accessToken, apiVersion, saveToDisk);
                     GetAzureResource(result, resId + "/backupEngines", accessToken, apiVersion, saveToDisk);
                     break;
 
@@ -259,6 +333,16 @@ namespace AzExport
                 default:
                     break;
             }
+        }
+
+        private dynamic GetAzureResourceAutoFindVersion(Dictionary<string, dynamic> results,string providersUrl, string resourceId, Dictionary<string,ProviderInformation> resourcesInformations, string defaultApiVersion, string token, bool saveToDisk = true, string method = "GET", string postContent = "")
+        {
+            string apiVersion = null;
+            string resourceTypeKey = (providersUrl + resourceId).ToLower();
+            if (resourcesInformations.ContainsKey(resourceTypeKey))
+                apiVersion = resourcesInformations[resourceTypeKey].ApiVersion;
+
+            return GetAzureResource(results, providersUrl+resourceId, token, apiVersion, saveToDisk, method, postContent);
         }
 
         private dynamic GetAzureResource(Dictionary<string, dynamic> results, string resourceId, string token, string apiVersion = null, bool saveToDisk = true, string method = "GET", string postContent = "")
@@ -270,11 +354,11 @@ namespace AzExport
                 var httpWebRequest = (HttpWebRequest)WebRequest.Create(uri);
                 httpWebRequest.Method = method;
                 httpWebRequest.Headers.Add(HttpRequestHeader.Authorization, "Bearer " + token);
-                httpWebRequest.UserAgent = "Microsoft.Azure.Management.Compute.ComputeManagementClient/10.0.0.0 AzurePowershell/v1.0.0.0";
+                httpWebRequest.UserAgent = "AzurePowershell/v3.6.0.0 PSVersion/v5.1.14393.693";
                 httpWebRequest.Host = "management.azure.com";
                 if (method == "POST")
                 {
-                    httpWebRequest.ContentType = "application/x-www-form-urlencoded";
+                    httpWebRequest.ContentType = "application/json; charset=utf-8";
                     httpWebRequest.ContentLength = postContent.Length;
                     using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
                     {
@@ -321,8 +405,6 @@ namespace AzExport
             {
                 throw new Exception(ex.Message + " : " + uri.ToString(),ex);
             }
-        }
-
-        
+        }        
     }
 }

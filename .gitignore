@@ -4,3 +4,8 @@
 /AzExport/bin/Debug
 /AzExport/obj/Debug
 /packages
+*.suo
+*.suo
+/.vs/AzExport/v15/.suo
+/AzExport/bin/Release
+/AzExport/obj/Release
