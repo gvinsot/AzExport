@@ -30,7 +30,6 @@ namespace AzExport
 
             string downloadPath = ".\\";
             bool zipResult = false;
-            bool verbose = false;
             string clientId = ConfigurationManager.AppSettings["AAD_ApplicationId"];
             string clientSecret = ConfigurationManager.AppSettings["AAD_ApplicationSecret"];
             string subscriptionId = ConfigurationManager.AppSettings["SubscriptionId"];
@@ -66,9 +65,6 @@ namespace AzExport
                     case "-ZipResult":
                         zipResult = bool.TrueString.ToLower() == value.ToLower();
                         break;
-                    //case "-Verbose":
-                    //    verbose = bool.TrueString.ToLower() == value.ToLower();
-                    //    break;
                 }
             }
 

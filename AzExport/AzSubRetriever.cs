@@ -45,82 +45,27 @@ namespace AzExport
         public Dictionary<string, dynamic> RetrieveAllResourcesViaRG(string subscriptionId, bool saveToDisk = true, bool zipResult = false)
         {
             Dictionary<string, dynamic> result = new Dictionary<string, dynamic>();
-            string accessToken = Helpers.GetAccessToken(ClientId, ClientSecret, AuthorizationEndpoint);            
+            string accessToken = Helpers.GetAccessToken(ClientId, ClientSecret, AuthorizationEndpoint);
             string subscriptionResourceId = "/subscriptions/" + subscriptionId;
-            
-            #region retrieve resource providers
+
 
             string providersUrl = $"{subscriptionResourceId}/providers";
-            dynamic providersResult = GetAzureResource(result, providersUrl, accessToken, providersVersion, saveToDisk);
-            var providers = providersResult.value.Values<dynamic>() as IEnumerable<dynamic>;
+            Dictionary<string, ProviderInformation> providersInformation = RetrieveProvidersInformation(saveToDisk, result, accessToken, providersUrl);
 
-            Console.WriteLine(providers.Count() + " resource providers");
-           
-            Dictionary<string, ProviderInformation> resourcesInformation = new Dictionary<string, ProviderInformation>();
-            foreach (var provider in providers)
-            {
-                string providerId = provider.id;
-                dynamic providersResourceTypes = provider.resourceTypes;
-                var resourceTypes = providersResourceTypes.Values<dynamic>() as IEnumerable<dynamic>; ;
-                foreach (var resourceType in resourceTypes)
-                {
-                    string resourceTypeKey = ($"{providerId}/{resourceType.resourceType}").ToLower();
-                    resourcesInformation.Add(resourceTypeKey, new ProviderInformation()
-                    {
-                        ApiVersion = (resourceType.apiVersions.Values<dynamic>() as IEnumerable<dynamic>).First().Value,
-                        Name = resourceTypeKey,
-                        Namespace = provider.@namespace.ToString()                 
-                    });
-                }
-                try
-                {
-                    var providerDetails = GetAzureResource(result, "/providers/Microsoft.Authorization/providerOperations/" + provider.@namespace.ToString(), accessToken, "2015-07-01&$expand=resourceTypes", saveToDisk);
-                    var resourceTypesDetails = providerDetails.resourceTypes.Values<dynamic>() as IEnumerable<dynamic>;
 
-                    foreach (var resourceTypeDetail in resourceTypesDetails)
-                    {
-                        var operations = resourceTypeDetail.operations.Values<dynamic>() as IEnumerable<dynamic>;
-                        foreach (var operation in operations)
-                        {
-                            var operationDetails = (operation.name.Value as string).Split('/');
-                             if (operationDetails.Length>3 && operationDetails.Last()=="read")
-                            {
-                                StringBuilder operationName = new StringBuilder();
-                                for(int i=2;i<operationDetails.Length-1;i++)
-                                {
-                                    operationName.Append("/").Append(operationDetails[i]);
-                                }
-                                var key = providersUrl + "/"+ operationDetails[0].ToLower() + "/"+ operationDetails[1].ToLower();
-                                if (resourcesInformation.ContainsKey(key))
-                                {
-                                    resourcesInformation[key].ReadOperations.Add(operationName.ToString());
-                                }
-                            }
-                        }
-                    }
-                }
-                catch(Exception ex)
-                {
-                    Console.WriteLine("Cannot retrieve operations for: " + provider.@namespace.ToString());
-                }
-            }
-            Console.WriteLine(resourcesInformation.Count() + " resource types");
-            #endregion
-            
             #region retrieve all resources
             dynamic resourceGroupsResult = GetAzureResource(result, $"{subscriptionResourceId}/resourcegroups", accessToken, providersVersion, saveToDisk).value;
             var resourceGroups = resourceGroupsResult.Values<dynamic>() as IEnumerable<dynamic>;
-
-
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/roleassignments", resourcesInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/roledefinitions", resourcesInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/classicadministrators", resourcesInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/permissions", resourcesInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/locks", resourcesInformation, providersVersion, accessToken, saveToDisk);
-//            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/operations", resourcesTypeApiVersion, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/policyassignments", resourcesInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/policydefinitions", resourcesInformation, providersVersion, accessToken, saveToDisk);
-//            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/provideroperations", resourcesTypeApiVersion, providersVersion, accessToken, saveToDisk);
+            
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/roleassignments", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/roledefinitions", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/classicadministrators", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/permissions", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/locks", providersInformation, providersVersion, accessToken, saveToDisk);
+            //            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/operations", resourcesTypeApiVersion, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/policyassignments", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/policydefinitions", providersInformation, providersVersion, accessToken, saveToDisk);
+            //            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/provideroperations", resourcesTypeApiVersion, providersVersion, accessToken, saveToDisk);
 
 
             Console.WriteLine(resourceGroups.Count() + " resources groups");
@@ -148,25 +93,25 @@ namespace AzExport
 
                             ProviderInformation info = null;
 
-                            if (resourcesInformation.ContainsKey(resourceTypeKey))
+                            if (providersInformation.ContainsKey(resourceTypeKey))
                             {
-                                info = resourcesInformation[resourceTypeKey];
+                                info = providersInformation[resourceTypeKey];
                                 apiVersion = info.ApiVersion;
                             }
 
                             GetAzureResource(result, resourceId, accessToken, apiVersion, saveToDisk);
-                            
-                            if(info!=null)
+
+                            if (info != null)
                             {
-                                foreach(var readOperation in info.ReadOperations)
+                                foreach (var readOperation in info.ReadOperations)
                                 {
                                     try
                                     {
                                         GetAzureResource(result, resourceId + readOperation, accessToken, apiVersion, saveToDisk);
                                     }
-                                    catch(Exception ex)
+                                    catch (Exception ex)
                                     {
-                                        Trace.TraceWarning("Warning: Cannot export " + resourceId + readOperation);
+                                        Trace.TraceWarning("Warning: Cannot export " + resourceId + readOperation + " : " + ex.Message);
                                         //maybe parameter was expected...
                                     }
                                 }
@@ -182,7 +127,7 @@ namespace AzExport
 
                     });
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Console.WriteLine("Error retrieving " + rg.id.Value + "/resources : " + ex.Message);
                 }
@@ -191,32 +136,32 @@ namespace AzExport
             #endregion retrieve all resources
 
             #region ensure jobs are finished
-            if (saveToDisk && runningJobs.Count>0)
+            if (saveToDisk && runningJobs.Count > 0)
             {
                 runningJobs.AsParallel().ForAll(job =>
                 {
                     try
                     {
-                        switch(job.JobType)
+                        switch (job.JobType)
                         {
                             case JobTypes.IoTDevicesExport:
                                 var jobState = Helpers.GetRemoteJsonObject(job.JobRequestUrl, accessToken);
-                                var startTime = DateTime.Now;                                                                
-                                while(jobState.status!="completed" && (DateTime.Now- startTime)<TimeSpan.FromMinutes(2))
+                                var startTime = DateTime.Now;
+                                while (jobState.status != "completed" && (DateTime.Now - startTime) < TimeSpan.FromMinutes(2))
                                 {
                                     Thread.Sleep(1000);
                                 }
                                 string resultDevices = (new WebClient()).DownloadString(job.JobResultOutput);
-                                Helpers.SaveResultToFile(this.FileDownloadPath, job.ExportedResourceId, resultDevices,"result");
+                                Helpers.SaveResultToFile(this.FileDownloadPath, job.ExportedResourceId, resultDevices, "result");
                                 break;
 
-                                //TODO : Add other asynchronous job to check
+                            //TODO : Add other asynchronous job to check
                             default:
                                 break;
                         }
 
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         Console.Error.WriteLine("Error retrieving job output for " + job.ExportedResourceId + " : " + ex.Message);
                     }
@@ -227,13 +172,75 @@ namespace AzExport
 
             if (saveToDisk && zipResult)
             {
-                Helpers.ZipResult(subscriptionId,Path.Combine(FileDownloadPath,"subscriptions"));
+                Helpers.ZipResult(subscriptionId, Path.Combine(FileDownloadPath, "subscriptions"));
             }
 
             return result;
         }
 
-        
+        private Dictionary<string, ProviderInformation> RetrieveProvidersInformation(bool saveToDisk, Dictionary<string, dynamic> result, string accessToken, string providersUrl)
+        {
+            dynamic providersResult = GetAzureResource(result, providersUrl, accessToken, providersVersion, saveToDisk);
+            var providers = providersResult.value.Values<dynamic>() as IEnumerable<dynamic>;
+
+            Console.WriteLine(providers.Count() + " resource providers");
+
+            Dictionary<string, ProviderInformation> resourcesInformation = new Dictionary<string, ProviderInformation>();
+            providers.AsParallel().ForAll(provider =>
+            {
+                string providerId = provider.id;
+                dynamic providersResourceTypes = provider.resourceTypes;
+                var resourceTypes = providersResourceTypes.Values<dynamic>() as IEnumerable<dynamic>; ;
+                foreach (var resourceType in resourceTypes)
+                {
+                    string resourceTypeKey = ($"{providerId}/{resourceType.resourceType}").ToLower();
+                    lock (resourcesInformation)
+                    {
+                        resourcesInformation.Add(resourceTypeKey, new ProviderInformation()
+                        {
+                            ApiVersion = (resourceType.apiVersions.Values<dynamic>() as IEnumerable<dynamic>).First().Value,
+                            Name = resourceTypeKey,
+                            Namespace = provider.@namespace.ToString()
+                        });
+                    }
+                }
+                try
+                {
+                    var providerDetails = GetAzureResource(result, "/providers/Microsoft.Authorization/providerOperations/" + provider.@namespace.ToString(), accessToken, "2015-07-01&$expand=resourceTypes", false);
+                    var resourceTypesDetails = providerDetails.resourceTypes.Values<dynamic>() as IEnumerable<dynamic>;
+
+                    foreach (var resourceTypeDetail in resourceTypesDetails)
+                    {
+                        var operations = resourceTypeDetail.operations.Values<dynamic>() as IEnumerable<dynamic>;
+                        foreach (var operation in operations)
+                        {
+                            var operationDetails = (operation.name.Value as string).Split('/');
+                            if (operationDetails.Length > 3 && operationDetails.Last() == "read" && operationDetails[2]!="providers")
+                            {
+                                StringBuilder operationName = new StringBuilder();
+                                for (int i = 2; i < operationDetails.Length - 1; i++)
+                                {
+                                    operationName.Append("/").Append(operationDetails[i]);
+                                }
+                                var key = providersUrl + "/" + operationDetails[0].ToLower() + "/" + operationDetails[1].ToLower();
+                                if (resourcesInformation.ContainsKey(key))
+                                {
+                                    resourcesInformation[key].ReadOperations.Add(operationName.ToString());
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError(ex.Message);
+                    Console.WriteLine("Cannot retrieve operations for: " + provider.@namespace.ToString());
+                }
+            });
+            Console.WriteLine(resourcesInformation.Count() + " resource types");
+            return resourcesInformation;
+        }
+
 
         private void ExportSpecificConfigurations(bool saveToDisk, dynamic res, string accessToken, Dictionary<string, dynamic> result, string apiVersion, string switchValue)
         {

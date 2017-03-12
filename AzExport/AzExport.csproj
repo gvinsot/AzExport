@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4F55BBC7-EDA4-4EA1-AF86-22079FC31334}</ProjectGuid>
+    <ProjectGuid>{5F1F3441-0EDB-428F-9EFC-861E2B88312A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AzExport</RootNamespace>
