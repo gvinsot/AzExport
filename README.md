@@ -3,6 +3,8 @@ Export Azure Subscriptions
 
 This software helps you export a full Azure subscription configuration.
 
+[DOWNLOAD NOW](https://github.com/gvinsot/AzExport/releases)
+
 The purpose is to retrieve a view equivalent (or more detailed) to the resource tree visible in [resources.azure.com](https://resources.azure.com/)
 It exports the full ARM descriptions doing Rest API Calls.
 
@@ -25,8 +27,4 @@ And generates files with same pattern like on resources.azure.com
 The principle of this program is to explore all resources through Azure Rest API calls.
 The full Azure Api documentation can be found here : [https://docs.microsoft.com/en-us/rest/api/](https://docs.microsoft.com/en-us/rest/api/)
 The swagger definitions of Azure Apis are here : [https://github.com/Azure/azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs)
-
-
-[DOWNLOAD NOW](https://github.com/gvinsot/AzExport/releases)
-
 
