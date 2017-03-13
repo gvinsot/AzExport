@@ -46,10 +46,9 @@ namespace AzExport
         {
             Dictionary<string, dynamic> result = new Dictionary<string, dynamic>();
             string accessToken = Helpers.GetAccessToken(ClientId, ClientSecret, AuthorizationEndpoint);
-            string subscriptionResourceId = "/subscriptions/" + subscriptionId;
-
-
+            string subscriptionResourceId = $"/subscriptions/{subscriptionId}";
             string providersUrl = $"{subscriptionResourceId}/providers";
+
             Dictionary<string, ProviderInformation> providersInformation = RetrieveProvidersInformation(saveToDisk, result, accessToken, providersUrl);
 
 
@@ -57,16 +56,13 @@ namespace AzExport
             dynamic resourceGroupsResult = GetAzureResource(result, $"{subscriptionResourceId}/resourcegroups", accessToken, providersVersion, saveToDisk).value;
             var resourceGroups = resourceGroupsResult.Values<dynamic>() as IEnumerable<dynamic>;
             
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/roleassignments", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/roledefinitions", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/classicadministrators", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/permissions", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/locks", providersInformation, providersVersion, accessToken, saveToDisk);
-            //            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/operations", resourcesTypeApiVersion, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/policyassignments", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/policydefinitions", providersInformation, providersVersion, accessToken, saveToDisk);
-            //            GetAzureResourceAutoFindVersion(result, providersUrl, "/Microsoft.Authorization/provideroperations", resourcesTypeApiVersion, providersVersion, accessToken, saveToDisk);
-
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/roleassignments", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/roledefinitions", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/classicadministrators", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/permissions", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/locks", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/policyassignments", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl + "/Microsoft.Authorization/policydefinitions", providersInformation, providersVersion, accessToken, saveToDisk);
 
             Console.WriteLine(resourceGroups.Count() + " resources groups");
 
@@ -81,6 +77,7 @@ namespace AzExport
 
                     // Export template
                     GetAzureResource(result, rg.id.Value + "/exportTemplate", accessToken, providersVersion, saveToDisk, "POST", "{\"resources\":[\"*\"]}");
+                    //
 
                     resources.AsParallel().ForAll(res =>
                     {
@@ -88,9 +85,7 @@ namespace AzExport
                         try
                         {
                             string apiVersion = providersVersion;
-
                             string resourceTypeKey = (providersUrl + "/" + res.type).ToLower();
-
                             ProviderInformation info = null;
 
                             if (providersInformation.ContainsKey(resourceTypeKey))
@@ -234,7 +229,7 @@ namespace AzExport
                 catch (Exception ex)
                 {
                     Trace.TraceError(ex.Message);
-                    Console.WriteLine("Cannot retrieve operations for: " + provider.@namespace.ToString());
+                    Console.WriteLine("WARNING: Cannot retrieve operations details for: " + provider.@namespace.ToString());
                 }
             });
             Console.WriteLine(resourcesInformation.Count() + " resource types");
@@ -342,14 +337,13 @@ namespace AzExport
             }
         }
 
-        private dynamic GetAzureResourceAutoFindVersion(Dictionary<string, dynamic> results,string providersUrl, string resourceId, Dictionary<string,ProviderInformation> resourcesInformations, string defaultApiVersion, string token, bool saveToDisk = true, string method = "GET", string postContent = "")
+        private dynamic GetAzureResourceAutoFindVersion(Dictionary<string, dynamic> results, string resourceId, Dictionary<string,ProviderInformation> resourcesInformations, string defaultApiVersion, string token, bool saveToDisk = true, string method = "GET", string postContent = "")
         {
             string apiVersion = null;
-            string resourceTypeKey = (providersUrl + resourceId).ToLower();
-            if (resourcesInformations.ContainsKey(resourceTypeKey))
-                apiVersion = resourcesInformations[resourceTypeKey].ApiVersion;
+            if (resourcesInformations.ContainsKey(resourceId.ToLower()))
+                apiVersion = resourcesInformations[resourceId.ToLower()].ApiVersion;
 
-            return GetAzureResource(results, providersUrl+resourceId, token, apiVersion, saveToDisk, method, postContent);
+            return GetAzureResource(results, resourceId, token, apiVersion, saveToDisk, method, postContent);
         }
 
         private dynamic GetAzureResource(Dictionary<string, dynamic> results, string resourceId, string token, string apiVersion = null, bool saveToDisk = true, string method = "GET", string postContent = "")
