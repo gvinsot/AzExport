@@ -19,7 +19,9 @@ You can also edit the App.Config file to input Client Id, Client Secret, Subscri
 The program provides following output on console :
  
 And generates files with same pattern like on resources.azure.com
- 
+
+![alt tag](https://gvbackup.blob.core.windows.net/public/AzExportScreenshot.PNG)
+
 The principle of this program is to explore all resources through Azure Rest API calls.
 The full Azure Api documentation can be found here : [https://docs.microsoft.com/en-us/rest/api/](https://docs.microsoft.com/en-us/rest/api/)
 The swagger definitions of Azure Apis are here : [https://github.com/Azure/azure-rest-api-specs](https://github.com/Azure/azure-rest-api-specs)
