@@ -126,7 +126,7 @@ namespace AzInfoApi.Controllers
                                         ApiVersion = el.ApiVersion,
                                         DataCenter = dataCenter.ToString(),
                                         Operation=el.Operation,
-                                        OperationDetails=el.OperationDetails,
+                                        //OperationDetails=el.OperationDetails,
                                         Provider=el.Provider,
                                         ResourceType=el.ResourceType,
                                         Verb=el.Verb
