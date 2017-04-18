@@ -27,42 +27,44 @@ namespace AzExport
     public class AzSubRetriever
     {
         public string FileDownloadPath = null;
-        public string AuthorizationEndpoint = null;
-        public string ClientId = null;
-        public string ClientSecret = null;
-        public string providersVersion = "2016-09-01";
+        private string _authorizationEndpoint = null;
+        private string _clientId = null;
+        private string _clientSecret = null;
+        private string _providersVersion = "2016-09-01";
 
-        List<JobModel> runningJobs = new List<JobModel>();
+        private List<JobModel> _runningJobs = new List<JobModel>();
+        private string _accessToken = null;
 
         public AzSubRetriever(string clientId, string clientSecret, string authorizationEndpoint)
         {
-            ClientId = clientId;
-            ClientSecret = clientSecret;
-            AuthorizationEndpoint = authorizationEndpoint;
+            _clientId = clientId;
+            _clientSecret = clientSecret;
+            _authorizationEndpoint = authorizationEndpoint;
             FileDownloadPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase.Replace(@"file:///", ""));
+            _accessToken = Helpers.GetAccessToken(_clientId, _clientSecret, _authorizationEndpoint);
         }
 
         public Dictionary<string, dynamic> RetrieveAllResourcesViaRG(string subscriptionId, bool saveToDisk = true, bool zipResult = false)
         {
             Dictionary<string, dynamic> result = new Dictionary<string, dynamic>();
-            string accessToken = Helpers.GetAccessToken(ClientId, ClientSecret, AuthorizationEndpoint);
+
             string subscriptionResourceId = $"/subscriptions/{subscriptionId}";
             string providersUrl = $"{subscriptionResourceId}/providers";
 
-            Dictionary<string, ProviderInformation> providersInformation = RetrieveProvidersInformation(saveToDisk, result, accessToken, providersUrl);
+            Dictionary<string, ProviderInformation> providersInformation = RetrieveProvidersInformation(saveToDisk, result, _accessToken, providersUrl);
 
 
             #region retrieve all resources
-            dynamic resourceGroupsResult = GetAzureResource(result, $"{subscriptionResourceId}/resourcegroups", accessToken, providersVersion, saveToDisk).value;
+            dynamic resourceGroupsResult = GetAzureResource(result, $"{subscriptionResourceId}/resourcegroups", _accessToken, _providersVersion, saveToDisk).value;
             var resourceGroups = resourceGroupsResult.Values<dynamic>() as IEnumerable<dynamic>;
             
-            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/roleassignments", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/roledefinitions", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/classicadministrators", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/permissions", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/locks", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/policyassignments", providersInformation, providersVersion, accessToken, saveToDisk);
-            GetAzureResourceAutoFindVersion(result, providersUrl + "/Microsoft.Authorization/policydefinitions", providersInformation, providersVersion, accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/roleassignments", providersInformation, _providersVersion, _accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/roledefinitions", providersInformation, _providersVersion, _accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/classicadministrators", providersInformation, _providersVersion, _accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/permissions", providersInformation, _providersVersion, _accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/locks", providersInformation, _providersVersion, _accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl+ "/Microsoft.Authorization/policyassignments", providersInformation, _providersVersion, _accessToken, saveToDisk);
+            GetAzureResourceAutoFindVersion(result, providersUrl + "/Microsoft.Authorization/policydefinitions", providersInformation, _providersVersion, _accessToken, saveToDisk);
 
             Console.WriteLine(resourceGroups.Count() + " resources groups");
 
@@ -70,13 +72,13 @@ namespace AzExport
             {
                 try
                 {
-                    dynamic resourcesResult = GetAzureResource(result, rg.id.Value + "/resources", accessToken, providersVersion, saveToDisk);
+                    dynamic resourcesResult = GetAzureResource(result, rg.id.Value + "/resources", _accessToken, _providersVersion, saveToDisk);
                     var resources = resourcesResult.value.Values<dynamic>() as IEnumerable<dynamic>;
 
                     System.Console.WriteLine(resources.Count() + " resources in " + rg.name);
 
                     // Export template
-                    GetAzureResource(result, rg.id.Value + "/exportTemplate", accessToken, providersVersion, saveToDisk, "POST", "{\"resources\":[\"*\"]}");
+                    GetAzureResource(result, rg.id.Value + "/exportTemplate", _accessToken, _providersVersion, saveToDisk, "POST", "{\"resources\":[\"*\"]}");
                     //
 
                     resources.AsParallel().ForAll(res =>
@@ -84,7 +86,7 @@ namespace AzExport
                         string resourceId = res.id.ToString();
                         try
                         {
-                            string apiVersion = providersVersion;
+                            string apiVersion = _providersVersion;
                             string resourceTypeKey = (providersUrl + "/" + res.type).ToLower();
                             ProviderInformation info = null;
 
@@ -94,7 +96,7 @@ namespace AzExport
                                 apiVersion = info.ApiVersion;
                             }
 
-                            GetAzureResource(result, resourceId, accessToken, apiVersion, saveToDisk);
+                            GetAzureResource(result, resourceId, _accessToken, apiVersion, saveToDisk);
 
                             if (info != null)
                             {
@@ -102,7 +104,7 @@ namespace AzExport
                                 {
                                     try
                                     {
-                                        GetAzureResource(result, resourceId + readOperation, accessToken, apiVersion, saveToDisk);
+                                        GetAzureResource(result, resourceId + readOperation, _accessToken, apiVersion, saveToDisk);
                                     }
                                     catch (Exception ex)
                                     {
@@ -112,7 +114,7 @@ namespace AzExport
                                 }
                             }
 
-                            ExportSpecificConfigurations(saveToDisk, res, accessToken, result, apiVersion, res.type.ToString().ToLower());
+                            ExportSpecificConfigurations(saveToDisk, res, _accessToken, result, apiVersion, res.type.ToString().ToLower());
 
                         }
                         catch (Exception ex)
@@ -131,16 +133,16 @@ namespace AzExport
             #endregion retrieve all resources
 
             #region ensure jobs are finished
-            if (saveToDisk && runningJobs.Count > 0)
+            if (saveToDisk && _runningJobs.Count > 0)
             {
-                runningJobs.AsParallel().ForAll(job =>
+                _runningJobs.AsParallel().ForAll(job =>
                 {
                     try
                     {
                         switch (job.JobType)
                         {
                             case JobTypes.IoTDevicesExport:
-                                var jobState = Helpers.GetRemoteJsonObject(job.JobRequestUrl, accessToken);
+                                var jobState = Helpers.GetRemoteJsonObject(job.JobRequestUrl, _accessToken);
                                 var startTime = DateTime.Now;
                                 while (jobState.status != "completed" && (DateTime.Now - startTime) < TimeSpan.FromMinutes(2))
                                 {
@@ -175,7 +177,7 @@ namespace AzExport
 
         private Dictionary<string, ProviderInformation> RetrieveProvidersInformation(bool saveToDisk, Dictionary<string, dynamic> result, string accessToken, string providersUrl)
         {
-            dynamic providersResult = GetAzureResource(result, providersUrl, accessToken, providersVersion, saveToDisk);
+            dynamic providersResult = GetAzureResource(result, providersUrl, accessToken, _providersVersion, saveToDisk);
             var providers = providersResult.value.Values<dynamic>() as IEnumerable<dynamic>;
 
             Console.WriteLine(providers.Count() + " resource providers");
@@ -272,7 +274,7 @@ namespace AzExport
                     if (!String.IsNullOrEmpty(containerSasUri))
                     {
                         var job = GetAzureResource(result, resId + "/exportDevices", accessToken, apiVersion, saveToDisk, "POST", "ExportBlobContainerUri=" + Uri.EscapeDataString(containerSasUri));
-                        runningJobs.Add(new JobModel()
+                        _runningJobs.Add(new JobModel()
                         {
                             JobType = JobTypes.IoTDevicesExport,
                             JobRequestUrl = "https://management.azure.com" + resId + "/jobs/" + job.jobId + "?api-version=" + apiVersion,

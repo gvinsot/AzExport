@@ -22,10 +22,10 @@ namespace AzExport
         
         static void Main(string[] args)
         {
-            LoadEmbbededAssembly("Microsoft.IdentityModel.Clients.ActiveDirectory.dll");
-            LoadEmbbededAssembly("Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll");
-            LoadEmbbededAssembly("Microsoft.WindowsAzure.Configuration.dll");
-            LoadEmbbededAssembly("Newtonsoft.Json.dll");
+            Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.dll");
+            Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll");
+            Helpers.LoadEmbbededAssembly("AzExport.Microsoft.WindowsAzure.Configuration.dll");
+            Helpers.LoadEmbbededAssembly("AzExport.Newtonsoft.Json.dll");
 
 
             string downloadPath = ".\\";
@@ -92,31 +92,6 @@ namespace AzExport
             Console.WriteLine("Bad Arguments");
             Console.WriteLine("Usage:");
             Console.WriteLine("AzExport -ClientId <client id> -ClientSecret <client secret> -AuthorizationEndpoint <https://login.microsoftonline.com/{Azure AD tenant ID}/> -SubscriptionId <subscription id> [-DownloadPath <D:\\temp\\>] [-ZipResult true]");
-        }
-
-        static void LoadEmbbededAssembly(string name)
-        {
-            String resourceName = "AzExport." +  name;
-            
-            AppDomain.CurrentDomain.AssemblyResolve +=
-              (sender, args) =>
-              {
-                  var an = new AssemblyName(args.Name);
-                  if (an.Name+".dll" == name)
-                  {
-                      Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
-                      if (stream != null)
-                      {
-                          using (stream)
-                          {
-                              byte[] data = new byte[stream.Length];
-                              stream.Read(data, 0, data.Length);
-                              return Assembly.Load(data);
-                          }
-                      }
-                  }
-                  return null;
-              };
         }
 
     }

@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 
 
@@ -62,62 +63,6 @@ namespace AzExport
                 return json;
             }
         }
-
-        public static void ZipResult(string directoryName, string rootDirectory)
-        {
-            string zipFile = Path.Combine(rootDirectory, directoryName + ".zip");
-            string folderToZip = Path.Combine(rootDirectory, directoryName + "\\");
-            if (File.Exists(zipFile))
-                File.Delete(zipFile);
-            ZipFile.CreateFromDirectory(folderToZip, zipFile);
-            Directory.Delete(folderToZip, true);
-        }
-
-        public static dynamic GetRemoteJsonObject(string uri, string token=null)
-        {
-            var client = new WebClient();
-            if (token != null)
-            {
-                client.Headers.Add("Authorization", "Bearer " + token);
-            }
-            string result = client.DownloadString(uri);
-            return JObject.Parse(result);
-        }
-
-        public static void SaveResultToFile(string rootPath, string resourceId, string resultString, string apiVersion = "NA")
-        {
-            string filePath = rootPath + resourceId.Replace("/", "\\").Replace("?", "_").Replace(" ", "_") + "-" + apiVersion + ".json";
-
-            string fileDir = Path.GetDirectoryName(filePath);
-            if (!Directory.Exists(fileDir))
-                Directory.CreateDirectory(fileDir);
-
-            File.WriteAllText(filePath, resultString);
-        }
-
-
-        public static void LoadEmbbededAssembly(string resourceName)
-        {
-            AppDomain.CurrentDomain.AssemblyResolve +=
-              (sender, args) =>
-              {
-                  var an = new AssemblyName(args.Name);
-                  if ("AzExport."+an.Name + ".dll" == resourceName)
-                  {
-                      Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName);
-                      if (stream != null)
-                      {
-                          using (stream)
-                          {
-                              byte[] data = new byte[stream.Length];
-                              stream.Read(data, 0, data.Length);
-                              return Assembly.Load(data);
-                          }
-                      }
-                  }
-                  return null;
-              };
-        }
-
+                
     }
 }
