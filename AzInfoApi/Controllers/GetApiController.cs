@@ -14,12 +14,12 @@ using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using AzExport;
 using Newtonsoft.Json.Linq;
+using AzInfoApi.helpers;
 
 namespace AzInfoApi.Controllers
 {
+    [Route("api")]
     [Produces("application/json")]
-    [Route("AzureGetApi")]
-    
     public class GetApiController : Controller
     {
         private IMemoryCache _cache;
@@ -30,6 +30,7 @@ namespace AzInfoApi.Controllers
 
 
         // GET api/values
+        [Route("all")]
         [HttpGet]
         public IEnumerable<ApiInfo> Get([FromQuery] string datacenter, [FromQuery] string apiVersion, [FromQuery] string provider)
         {
@@ -40,7 +41,7 @@ namespace AzInfoApi.Controllers
             if (!cacheAvailable)
             {
                 if (!System.IO.File.Exists("getOperations.json"))
-                    Post();
+                    Post("43211234");
 
                 // Key not in cache, so get data.
                 using (var fs = System.IO.File.OpenText("getOperations.json"))
@@ -72,11 +73,58 @@ namespace AzInfoApi.Controllers
 
             return result;
         }
-        
-        // POST api/values
-        [HttpPost]
-        public async void Post()
+
+        [HttpGet]
+        [Route("versions")]
+        public List<string> GetDistinctVersion()
         {
+            var all = Get(null, null, null);
+
+            var result = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.ApiVersion.ToLower())).Select(el => el.ApiVersion).ToList();
+
+            return result;
+        }
+
+        [HttpGet]
+        [Route("datacenters")]
+        public List<string> GetDistinctDataCenters()
+        {
+            var all = Get(null, null, null);
+
+            var result = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.DataCenter)).Select(el => el.DataCenter).ToList();
+
+            return result;
+        }
+
+        [HttpGet]
+        [Route("providers")]
+        public List<string> GetDistinctProviders()
+        {
+            var all = Get(null, null, null);
+
+            var result = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.Provider.ToLower())).Select(el => el.Provider).ToList();
+
+            return result;
+        }
+
+        [HttpGet]
+        [Route("resources")]
+        public List<string> GetDistinctResource([FromQuery] string provider)
+        {
+            var all = Get(null, null, provider);
+
+            var result = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.ResourceType.ToLower())).Select(el => el.Provider+"/"+el.ResourceType).ToList();
+
+            return result;
+        }
+
+        [Route("update")]
+        [HttpPost]
+        public async void Post([FromQuery] string key)
+        {
+            if (key != "43211234")
+                return;
+
             string ExtractPath = "extracted";
 
             var file = await DownloadSwaggerDefinitions();
@@ -107,18 +155,22 @@ namespace AzInfoApi.Controllers
                 var resourceTypes = providersResourceTypes.Values<dynamic>() as IEnumerable<dynamic>;
                 foreach (var resourceTypeInfo in resourceTypes)
                 {
-                    lock (sortedResult)
+                    var resourceType = resourceTypeInfo.resourceType.ToString().ToLower();
+                    var apiVersions = resourceTypeInfo.apiVersions.Values<dynamic>() as IEnumerable<dynamic>;
+                    foreach (var apiVersion in apiVersions)
                     {
-                        var resourceType = resourceTypeInfo.resourceType.ToString().ToLower();
-                        var apiVersions = resourceTypeInfo.apiVersions.Values<dynamic>() as IEnumerable<dynamic>;
-                        foreach (var apiVersion in apiVersions)
+                        lock (elementsToAdd)
                         {
                             var toUpdate = sortedResult.Where(el => el.Provider.ToLower() == providerName&& el.ResourceType.ToLower() == resourceType && el.ApiVersion.ToLower() == apiVersion.ToString().ToLower()).ToList();
                             var dataCenters = resourceTypeInfo.locations.Values<dynamic>() as IEnumerable<dynamic>;
-                            
+
+
+                            if (toUpdate.Count == 0)
+                                toUpdate.Add(new ApiInfo() { ApiVersion = apiVersion.ToString(), Provider = providerName, ResourceType = resourceType, Verb = "Other", Operation = "¤¤¤¤" });
+
                             foreach (var el in toUpdate)
                             {
-                                sortedResult.Remove(el);
+                               // sortedResult.Remove(el);
                                 foreach(var dataCenter in dataCenters)
                                 {
                                     elementsToAdd.Add(new ApiInfo()

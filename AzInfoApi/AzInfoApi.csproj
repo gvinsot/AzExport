@@ -14,8 +14,26 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="wwwroot\favicon.ico" />
+    <Content Include="wwwroot\index.htm" />
+    <Content Include="wwwroot\styles\app.css" />
+    <Content Include="wwwroot\views\ByResource.html">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="wwwroot\views\ByVersion.html">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="wwwroot\views\ByDC.html" />
+    <Content Include="wwwroot\views\TestBindings2.html" />
+    <Content Include="wwwroot\views\WhatIsIt.html">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="extracted\" />
-    <Folder Include="wwwroot\" />
+    <Folder Include="wwwroot\images\" />
+    <Folder Include="wwwroot\scripts\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.0.0" />
