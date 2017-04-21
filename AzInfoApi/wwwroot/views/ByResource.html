@@ -1,0 +1,60 @@
+﻿<div style="margin: 30px">
+    <h1>Test Bindings 2<br />
+    </h1>
+    <br />
+    <br />
+    Scenario sample for more complex usage.<br />
+    <div class="getstarteddivcode">
+        Explore this <a href="https://github.com/gvinsot/SilverScript/blob/master/Silverscript.io/wwwroot/views/TestBindings2.html"> code page code source </a> to discover how simple it is ! There is no line of javascript !
+    </div>
+
+    <br />
+
+    <br />
+    <div data-context="viewmodels/Test2">
+
+        <div data-context="{Path=[0]}">
+            Change first user:
+         <input type="text" data-binding="{Path=FirstName,Mode=TwoWay,Destination=value}" style="width: 300px; height: 30px; border: 1px solid lightgray; outline: 1px solid lightgray" value="" />
+
+        </div>
+        <br />
+        <div style="display:inline-flex">
+            <table style="width: 300px" data-source="{}" data-template="views/itemOneWay.html"></table>
+
+            <div id="SelectedItem" style="width: 350px; margin:20px">
+                <div style="width: 300px">
+                    Selected :
+                    <br />
+                    First Name: <span data-binding="{Path=FirstName,Mode=OneWay}"></span>
+                    <br />
+                    Last Name: <span data-binding="{Path=LastName,Mode=OneWay}"></span>
+                    <br />
+                    Address: <span data-binding="{Path=Address,Mode=OneWay}"></span>
+                    <br />
+                    Age: <span data-binding="{Path=Age,Mode=OneWay}"></span>
+                    <br />
+                    <br />
+                    Children :<br />
+                    <br />
+                </div>
+                <table style="width:400px" data-source="{Children}" data-template="views/childOneWay.html"></table>                
+            </div>
+           
+        </div>
+
+        <div id="SelectedItem2" style="float:right; width:200px">
+            Selected child :<br />
+            First Name:<span data-binding="{Path=FirstName,Mode=OneWay}"></span>
+            <br />
+            Last Name: <span data-binding="{Path=LastName,Mode=OneWay}"></span>
+            <br />
+            Address: <span data-binding="{Path=Address,Mode=OneWay}"></span>
+            <br />
+            Age: <span data-binding="{Path=Age,Mode=OneWay}"></span>
+            <br />
+        </div>
+
+    </div>
+</div>
+

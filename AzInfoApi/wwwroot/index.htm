@@ -1,0 +1,57 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" style="height: 100%">
+<head>
+    <meta charset="utf-8" />
+    <title>AzInfo</title>
+    <link rel="stylesheet" href="styles/app.css" type="text/css" />
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script type="text/javascript" src="https://silverscript.azurewebsites.net/scripts/silverscript.js"></script>
+    <script type="text/javascript" src="scripts/app.js"></script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+    <script type="text/javascript">
+    var appInsights = window.appInsights || function (config) {
+        function i(config) { t[config] = function () { var i = arguments; t.queue.push(function () { t[config].apply(t, i) }) } } var t = { config: config }, u = document, e = window, o = "script", s = "AuthenticatedUserContext", h = "start", c = "stop", l = "Track", a = l + "Event", v = l + "Page", y = u.createElement(o), r, f; y.src = config.url || "https://az416426.vo.msecnd.net/scripts/a/ai.0.js"; u.getElementsByTagName(o)[0].parentNode.appendChild(y); try { t.cookie = u.cookie } catch (p) { } for (t.queue = [], t.version = "1.0", r = ["Event", "Exception", "Metric", "PageView", "Trace", "Dependency"]; r.length;)i("track" + r.pop()); return i("set" + s), i("clear" + s), i(h + a), i(c + a), i(h + v), i(c + v), i("flush"), config.disableExceptionTracking || (r = "onerror", i("_" + r), f = e[r], e[r] = function (config, i, u, e, o) { var s = f && f(config, i, u, e, o); return s !== !0 && t["_" + r](config, i, u, e, o), s }), t
+    }({
+        instrumentationKey: "f51994ee-2321-4a44-8034-befde039a631"
+    });
+
+    window.appInsights = appInsights;
+    appInsights.trackPageView();
+
+        var activeToggles = new Object();
+        var toggle = function (origin,toggleKey)
+        {
+            if (activeToggles[toggleKey] != undefined) {
+                activeToggles[toggleKey].removeClass('active');
+            }
+            var jorigin = $(origin);
+            activeToggles[toggleKey] = jorigin;
+            jorigin.addClass('active');
+        }
+    </script>
+</head>
+
+<body style="margin:0px">
+
+    <div style="position: relative; padding-left: 17px; padding-top: 6px; font-size: large; width: 100%; background: #666666; height: 65px; color: white">
+        <div style="max-width:980px;margin-left:auto;margin-right:auto">
+            <button onclick="SS.SetTemplate('MainPage','views/WhatIsIt.html');" style="width: 130px; margin:5px; color:white">What is it ?</button>
+            <button onclick="SS.SetTemplate('MainPage','views/byDC/ByDC.html');" style="width: 130px; margin:5px; color:white">Datacenters</button>
+            <button onclick="SS.SetTemplate('MainPage','views/ByVersion.html');" style="width: 150px; margin:5px; color:white">Api Versions</button>
+            <button onclick="SS.SetTemplate('MainPage','views/ByResource.html');" style="width: 180px;margin:5px; color:white">Resource Types</button>
+        </div>
+    </div>
+    <div style="position: relative; font-size: large; width: 100%; background-color: white; height: 3px; background-image: linear-gradient(gray,white)">
+    </div>   
+    <div class="col-md-1">
+    </div>   
+    <div id="MainPage" class="col-md-11" data-template="views/WhatIsIt.html" style="margin-left:auto;margin-right:auto">
+
+    </div>
+</body>
+
+</html>

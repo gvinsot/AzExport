@@ -7,33 +7,40 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="extracted\azure-rest-api-specs-master\**" />
-    <Content Remove="extracted\azure-rest-api-specs-master\**" />
-    <EmbeddedResource Remove="extracted\azure-rest-api-specs-master\**" />
-    <None Remove="extracted\azure-rest-api-specs-master\**" />
+    <Compile Remove="extracted\**" />
+    <Content Remove="extracted\**" />
+    <EmbeddedResource Remove="extracted\**" />
+    <None Remove="extracted\**" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="wwwroot\favicon.ico" />
     <Content Include="wwwroot\index.htm" />
+    <Content Include="wwwroot\scripts\app.ts" />
     <Content Include="wwwroot\styles\app.css" />
+    <Content Include="wwwroot\views\byDC\ByDC.html" />
+    <Content Include="wwwroot\views\byDC\ByDCproviders.html" />
+    <Content Include="wwwroot\views\byDC\ByDCoperations.html">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="wwwroot\views\byDC\ByDCversions.html" />
+    <Content Include="wwwroot\views\byDC\DcItem.html" />
+    <Content Include="wwwroot\views\byDC\OperationItem.html" />
+    <Content Include="wwwroot\views\byDC\ProviderItem.html" />
+    <Content Include="wwwroot\views\byDC\VersionItem.html" />
     <Content Include="wwwroot\views\ByResource.html">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="wwwroot\views\ByVersion.html">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="wwwroot\views\ByDC.html" />
-    <Content Include="wwwroot\views\TestBindings2.html" />
     <Content Include="wwwroot\views\WhatIsIt.html">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="extracted\" />
     <Folder Include="wwwroot\images\" />
-    <Folder Include="wwwroot\scripts\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.0.0" />
