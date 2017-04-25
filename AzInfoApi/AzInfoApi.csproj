@@ -33,13 +33,8 @@
     <Content Include="wwwroot\views\byOperation\OperationItem.html">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="wwwroot\views\ByVersion.html">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-    <Content Include="wwwroot\views\byVersion\byApiVersion.html" />
     <Content Include="wwwroot\views\byVersion\ByVersionDataCenters.html" />
     <Content Include="wwwroot\views\byVersion\ByVersionOperations.html" />
-    <Content Include="wwwroot\views\byVersion\ByApiVersionProviders.html" />
     <Content Include="wwwroot\views\byVersion\byVersion.html" />
     <Content Include="wwwroot\views\byVersion\ByVersionProviders.html" />
     <Content Include="wwwroot\views\byVersion\DcItem.html">
@@ -53,9 +48,6 @@
     </Content>
     <Content Include="wwwroot\views\byVersion\VersionItem.html" />
     <Content Include="wwwroot\views\RestApis.html" />
-    <Content Include="wwwroot\views\WhatIsIt - Copy.html">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
     <Content Include="wwwroot\views\WhatIsIt.html">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
