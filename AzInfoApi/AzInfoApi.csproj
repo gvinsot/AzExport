@@ -17,6 +17,7 @@
     <Content Include="wwwroot\favicon.ico" />
     <Content Include="wwwroot\index.htm" />
     <Content Include="wwwroot\scripts\app.ts" />
+    <Content Include="wwwroot\scripts\ByResource.html" />
     <Content Include="wwwroot\styles\app.css" />
     <Content Include="wwwroot\views\byDC\ByDC.html" />
     <Content Include="wwwroot\views\byDC\ByDCproviders.html" />
@@ -28,11 +29,32 @@
     <Content Include="wwwroot\views\byDC\OperationItem.html" />
     <Content Include="wwwroot\views\byDC\ProviderItem.html" />
     <Content Include="wwwroot\views\byDC\VersionItem.html" />
-    <Content Include="wwwroot\views\ByResource.html">
+    <Content Include="wwwroot\views\byOperation\byOperation.html" />
+    <Content Include="wwwroot\views\byOperation\OperationItem.html">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="wwwroot\views\ByVersion.html">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="wwwroot\views\byVersion\byApiVersion.html" />
+    <Content Include="wwwroot\views\byVersion\ByVersionDataCenters.html" />
+    <Content Include="wwwroot\views\byVersion\ByVersionOperations.html" />
+    <Content Include="wwwroot\views\byVersion\ByApiVersionProviders.html" />
+    <Content Include="wwwroot\views\byVersion\byVersion.html" />
+    <Content Include="wwwroot\views\byVersion\ByVersionProviders.html" />
+    <Content Include="wwwroot\views\byVersion\DcItem.html">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="wwwroot\views\byVersion\OperationItem.html">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="wwwroot\views\byVersion\ProviderItem.html">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="wwwroot\views\byVersion\VersionItem.html" />
+    <Content Include="wwwroot\views\RestApis.html" />
+    <Content Include="wwwroot\views\WhatIsIt - Copy.html">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
     <Content Include="wwwroot\views\WhatIsIt.html">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>

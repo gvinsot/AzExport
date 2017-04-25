@@ -82,26 +82,71 @@ namespace AzInfoApi.Controllers
             return result;
         }
 
+        [Route("filterableoperations")]
+        [HttpGet]
+        public IEnumerable<ApiInfo> GetOperationsFilterable([FromQuery] string datacenter, [FromQuery] string apiVersion, [FromQuery] string provider, [FromQuery] string resourceType)
+        {
+            List<ApiInfo> operations = null;
+            bool cacheAvailable = _cache.TryGetValue("operationsList", out operations);
+
+            if (!cacheAvailable)
+            {
+                var all = GetAllOperations(null, null, null, null);
+                operations = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.Operation)).Select(el => new ApiInfo() { ApiVersion = el.ApiVersion, DataCenter = el.DataCenter, Operation = el.Operation, Provider = el.Provider, Verb = el.Verb, ResourceType = el.ResourceType }).ToList();
+                foreach (var operation in operations)
+                {
+                    var operationAllInstances = all.Where(el => el.Operation == operation.Operation).ToList();
+                    operation.DataCenter = operationAllInstances.Select(el => el.DataCenter).Aggregate((a, b) => a + ";" + b);
+                    operation.ApiVersion = operationAllInstances.Select(el => el.ApiVersion).Aggregate((a, b) => a + ";" + b);
+                }
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    // Keep in cache for this time, reset time if accessed.
+                    .SetSlidingExpiration(TimeSpan.FromDays(14));
+                _cache.Set("operationsList", operations, cacheEntryOptions);
+            }
+
+            
+            return operations;
+        }
+
         [HttpGet]
         [Route("versions")]
         public List<ApiInfo> GetDistinctVersion([FromQuery] string apiVersion, [FromQuery] string dataCenter, [FromQuery] string provider, [FromQuery] string resourceType)
         {
             var all = GetAllOperations(dataCenter, apiVersion, provider, resourceType);
 
-            var result = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.ApiVersion.ToLower())).Select(el => new ApiInfo() { ApiVersion = el.ApiVersion }).ToList();
+            var result = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.ApiVersion.ToLower())).OrderBy(el=>el.ApiVersion).ToList();
 
             return result;
         }
 
         [HttpGet]
         [Route("datacenters")]
-        public List<ApiInfo> GetDistinctDataCenters([FromQuery] string apiVersion, [FromQuery] string provider, [FromQuery] string resourceType)
+        public List<ApiInfo> GetDistinctDataCenters([FromQuery] string apiVersion)
         {
-            var all = GetAllOperations(null, apiVersion, provider, resourceType);
+            List<ApiInfo> datacenters = null;
+            if (apiVersion == null)
+            {
+                bool cacheAvailable = _cache.TryGetValue("DatacentersList", out datacenters);
 
-            var result = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.DataCenter.ToLower())).ToList();
+                if (!cacheAvailable)
+                {
+                    var all = GetAllOperations(null, null, null, null);
+                    var dcs = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.DataCenter.ToLower())).ToList();
 
-            return result;
+                    var cacheEntryOptions = new MemoryCacheEntryOptions()
+                        // Keep in cache for this time, reset time if accessed.
+                        .SetSlidingExpiration(TimeSpan.FromDays(14));
+                    _cache.Set("DatacentersList", dcs, cacheEntryOptions);
+                }
+            }
+            else
+            {
+                var all = GetAllOperations(null, apiVersion, null, null);
+                datacenters = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.DataCenter.ToLower())).ToList();
+            }
+
+            return datacenters;
         }
 
         [HttpGet]
@@ -116,10 +161,10 @@ namespace AzInfoApi.Controllers
         }
 
         [HttpGet]
-        [Route("resources")]
-        public List<ApiInfo> GetDistinctResource([FromQuery] string datacenter, [FromQuery] string provider)
+        [Route("resourcestypes")]
+        public List<ApiInfo> GetDistinctResource([FromQuery] string datacenter, [FromQuery] string provider, [FromQuery] string apiVersion)
         {
-            var all = GetAllOperations(datacenter, null, provider, null);
+            var all = GetAllOperations(datacenter,apiVersion, provider, null);
 
             var result = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.Provider.ToLower() + "/" + a.ResourceType.ToLower())).ToList();
 
