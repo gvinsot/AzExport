@@ -127,15 +127,15 @@ namespace AzInfoApi.Controllers
 
         [HttpGet]
         [Route("datacenters")]
-        public List<ApiInfo> GetDistinctDataCenters([FromQuery] string apiVersion, [FromQuery] string dataCenter, [FromQuery] string provider, [FromQuery] string resourceType)
+        public List<ApiInfo> GetDistinctDataCenters([FromQuery] string apiVersion, [FromQuery] string provider, [FromQuery] string resourceType)
         {
             List<ApiInfo> result = null;
-            string cacheKey = "datacenters-" + dataCenter + "-" + apiVersion + "-" + provider + "-" + resourceType;
+            string cacheKey = "datacenters-" + apiVersion + "-" + provider + "-" + resourceType;
             bool cacheAvailable = _cache.TryGetValue(cacheKey, out result);
             if (cacheAvailable)
                 return result;
 
-            var all = GetAllOperations(null, null, null, null);
+            var all = GetAllOperations(null, apiVersion, provider, resourceType);
             result = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.DataCenter.ToLower())).OrderBy(el => el.DataCenter).ToList();
 
             _cache.Set(cacheKey, result, new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromDays(1)));
