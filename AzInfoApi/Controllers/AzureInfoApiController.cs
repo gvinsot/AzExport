@@ -246,13 +246,13 @@ namespace AzInfoApi.Controllers
                 _tracer.TraceEvent(TraceEventType.Error,1,ex.ToString());
             }
 
-            if (Directory.Exists("D:\\Home"))
+            if (Directory.Exists("D:\\home"))
             {
                 try
                 {
-                    System.IO.File.Delete("D:\\Home\\site\\wwwroot\\getOperations.json");
+                    System.IO.File.Delete("D:\\home\\site\\wwwroot\\getOperations.json");
                     //save result
-                    using (var fs = System.IO.File.CreateText("D:\\Home\\site\\wwwroot\\getOperations.json"))
+                    using (var fs = System.IO.File.CreateText("D:\\home\\site\\wwwroot\\getOperations.json"))
                     {
                         Newtonsoft.Json.JsonSerializer.Create().Serialize(fs, results);
                     }
