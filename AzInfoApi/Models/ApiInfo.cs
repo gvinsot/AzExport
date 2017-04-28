@@ -13,5 +13,6 @@ namespace AzInfoApi.Models
         public string Provider;
         public string ResourceType;
         public string DataCenter;
+        public dynamic OperationDetails;
     }
 }

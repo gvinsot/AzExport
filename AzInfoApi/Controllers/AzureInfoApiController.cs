@@ -16,6 +16,7 @@ using AzExport;
 using Newtonsoft.Json.Linq;
 using AzInfoApi.Helpers;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 
 namespace AzInfoApi.Controllers
 {
@@ -25,6 +26,8 @@ namespace AzInfoApi.Controllers
     {
         private IMemoryCache _cache;
         private AppSettings _settings;
+        TraceSource _tracer = new TraceSource("TraceAzureInfoApiController");
+
         public AzureInfoApiController(IMemoryCache memoryCache, IOptions<AppSettings> appSettings)
         {
             _cache = memoryCache;
@@ -228,11 +231,37 @@ namespace AzInfoApi.Controllers
             });
             //results = results.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.Provider + "/" + a.ResourceType + ":" + a.Operation)).ToList();
 
-            System.IO.File.Delete("getOperations.json");
-            //save result
-            using (var fs = System.IO.File.CreateText("getOperations.json"))
+            try
             {
-                Newtonsoft.Json.JsonSerializer.Create().Serialize(fs, results);
+                System.IO.File.Delete("getOperations.json");
+                //save result
+                using (var fs = System.IO.File.CreateText("getOperations.json"))
+                {
+                    Newtonsoft.Json.JsonSerializer.Create().Serialize(fs, results);
+                }
+            }
+            catch(Exception ex)
+            {
+                
+                _tracer.TraceEvent(TraceEventType.Error,1,ex.ToString());
+            }
+
+            if (Directory.Exists("D:\\Home"))
+            {
+                try
+                {
+                    System.IO.File.Delete("D:\\Home\\site\\wwwroot\\getOperations.json");
+                    //save result
+                    using (var fs = System.IO.File.CreateText("D:\\Home\\site\\wwwroot\\getOperations.json"))
+                    {
+                        Newtonsoft.Json.JsonSerializer.Create().Serialize(fs, results);
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                    _tracer.TraceEvent(TraceEventType.Error, 2, ex.ToString());
+                }
             }
             _cache.Remove("ApiInfoList");
 
@@ -340,6 +369,7 @@ namespace AzInfoApi.Controllers
                         {
                             ApiVersion = apiVersion,
                             Operation = key,
+                            OperationDetails = operations["paths"][key],
                             Verb = verbsString,
                             Provider = provider,
                             ResourceType = resourceType,

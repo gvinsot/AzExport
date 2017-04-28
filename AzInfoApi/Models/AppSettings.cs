@@ -7,11 +7,11 @@ namespace AzInfoApi.Models
 {
     public class AppSettings
     {
-        public string updateKey = "43211234";
-        public string tenantId = "1af78158-XXXX-XXXX-XXXX-02272cded0b6";
-        public string authorizationEndpoint= "https://login.microsoftonline.com/1af78158-XXXX-XXXX-XXXX-02272cded0b6/";
-        public string clientId= "22973c0e-XXXX-XXXX-XXXX-3910a3c67498";
-        public string clientSecret= "XXXXXXXXXXXXXXXXXXXXXXXX+lOCjkWQALR2Z5srkOY=";
-        public string subscriptionId= "318e1b85-XXXX-XXXX-XXXX-2ede0d8778b0";
+        public string updateKey = Environment.GetEnvironmentVariable("AZINFO_UPDATEKEY");
+        public string tenantId = Environment.GetEnvironmentVariable("AZINFO_TENANTID");
+        public string authorizationEndpoint= "https://login.microsoftonline.com/"+ Environment.GetEnvironmentVariable("AZINFO_TENANTID") + "/";
+        public string clientId= Environment.GetEnvironmentVariable("AZINFO_CLIENTID");
+        public string clientSecret = Environment.GetEnvironmentVariable("AZINFO_CLIENTSECRET");
+        public string subscriptionId= Environment.GetEnvironmentVariable("AZINFO_SUBSCRIPTIONID");
     }
 }
