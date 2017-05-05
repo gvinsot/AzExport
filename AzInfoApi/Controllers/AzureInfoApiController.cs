@@ -95,7 +95,7 @@ namespace AzInfoApi.Controllers
                 return operations;
 
             var all = GetAllOperations(null, null, null, null);
-            operations = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.Operation)).Select(el => new ApiInfo() { ApiVersion = el.ApiVersion, DataCenter = el.DataCenter, Operation = el.Operation, Provider = el.Provider, Verb = el.Verb, ResourceType = el.ResourceType }).ToList();
+            operations = all.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.Operation)).Select(el => new ApiInfo() { ApiVersion = el.ApiVersion, DataCenter = el.DataCenter, Operation = el.Operation, Provider = el.Provider, Verb = el.Verb, ResourceType = el.ResourceType, OperationDetails=el.OperationDetails }).ToList();
             foreach (var operation in operations)
             {
                 var operationAllInstances = all.Where(el => el.Operation == operation.Operation).ToList();
