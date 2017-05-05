@@ -30,18 +30,22 @@ namespace AzExport
         private string _authorizationEndpoint = null;
         private string _clientId = null;
         private string _clientSecret = null;
+        private string _tenantId = null;
         private string _providersVersion = "2016-09-01";
+        private string _managementApi = null;
 
         private List<JobModel> _runningJobs = new List<JobModel>();
         private string _accessToken = null;
 
-        public AzSubRetriever(string clientId, string clientSecret, string authorizationEndpoint)
+        public AzSubRetriever(string clientId, string clientSecret, string tenantId, string authorizationEndpoint= "https://login.microsoftonline.com/", string managementApi = "https://management.core.windows.net/")
         {
             _clientId = clientId;
             _clientSecret = clientSecret;
             _authorizationEndpoint = authorizationEndpoint;
+            _managementApi = managementApi;
+            _tenantId = tenantId;
             FileDownloadPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase.Replace(@"file:///", ""));
-            _accessToken = Helpers.GetAccessToken(_clientId, _clientSecret, _authorizationEndpoint);
+            _accessToken = Helpers.GetAccessToken(_clientId, _clientSecret, _authorizationEndpoint+"/"+tenantId+"/",managementApi);
         }
 
         public Dictionary<string, dynamic> RetrieveAllResourcesViaRG(string subscriptionId, bool saveToDisk = true, bool zipResult = false)
@@ -277,7 +281,7 @@ namespace AzExport
                         _runningJobs.Add(new JobModel()
                         {
                             JobType = JobTypes.IoTDevicesExport,
-                            JobRequestUrl = "https://management.azure.com" + resId + "/jobs/" + job.jobId + "?api-version=" + apiVersion,
+                            JobRequestUrl = this._managementApi + resId + "/jobs/" + job.jobId + "?api-version=" + apiVersion,
                             JobResultOutput = containerSasUri.Split('?').First() + "/devices.txt",
                             ExportedResourceId = resId + "/exportDevices"
                         });
@@ -350,7 +354,7 @@ namespace AzExport
 
         private dynamic GetAzureResource(Dictionary<string, dynamic> results, string resourceId, string token, string apiVersion = null, bool saveToDisk = true, string method = "GET", string postContent = "")
         {
-            Uri uri = new Uri("https://management.azure.com" + resourceId + (apiVersion == null ? "" : ("?api-version=" + apiVersion)));
+            Uri uri = new Uri(this._managementApi + resourceId + (apiVersion == null ? "" : ("?api-version=" + apiVersion)));
             try
             {                
                 // Create the request
@@ -358,7 +362,7 @@ namespace AzExport
                 httpWebRequest.Method = method;
                 httpWebRequest.Headers.Add(HttpRequestHeader.Authorization, "Bearer " + token);
                 httpWebRequest.UserAgent = "AzurePowershell/v3.6.0.0 PSVersion/v5.1.14393.693";
-                httpWebRequest.Host = "management.azure.com";
+                //httpWebRequest.Host = "management.azure.com";
                 if (method == "POST")
                 {
                     httpWebRequest.ContentType = "application/json; charset=utf-8";

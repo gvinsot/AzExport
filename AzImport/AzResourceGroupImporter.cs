@@ -12,15 +12,16 @@ namespace AzImport
         private string _clientId = null;
         private string _clientSecret = null;
         private string _authorizationEndpoint = null;
-        private string _providersVersion = "2016-09-01";
+        private string _managementApi = null;
         private string _accessToken = null;
 
-        public AzResourceGroupImporter(string clientId, string clientSecret, string authorizationEndpoint)
+        public AzResourceGroupImporter(string clientId, string clientSecret, string authorizationEndpoint, string managementApi)
         {
             _clientId = clientId;
             _clientSecret = clientSecret;
             _authorizationEndpoint = authorizationEndpoint;
-            _accessToken = Helpers.GetAccessToken(_clientId, _clientSecret, _authorizationEndpoint);
+            _managementApi = managementApi;
+            _accessToken = Helpers.GetAccessToken(_clientId, _clientSecret, _authorizationEndpoint, _managementApi);
         }
 
 

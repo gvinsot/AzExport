@@ -27,11 +27,11 @@ namespace AzExport
     public static class Helpers
     {
 
-        public static string GetAccessToken(string clientID, string applicationSecret, string authorizationEndpoint)
+        public static string GetAccessToken(string clientID, string applicationSecret, string authorizationEndpoint,string managementApi)
         {
             var authenticationContext = new AuthenticationContext(authorizationEndpoint);
             var credential = new ClientCredential(clientId: clientID, clientSecret: applicationSecret);
-            var result = authenticationContext.AcquireTokenAsync(resource: "https://management.core.windows.net/", clientCredential: credential).Result;
+            var result = authenticationContext.AcquireTokenAsync(resource: managementApi, clientCredential: credential).Result;
 
             if (result == null)
             {

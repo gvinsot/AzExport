@@ -25,13 +25,11 @@ namespace AzInfoApi.Controllers
     public class AzureInfoApiController : Controller
     {
         private IMemoryCache _cache;
-        private AppSettings _settings;
         TraceSource _tracer = new TraceSource("TraceAzureInfoApiController");
 
-        public AzureInfoApiController(IMemoryCache memoryCache, IOptions<AppSettings> appSettings)
+        public AzureInfoApiController(IMemoryCache memoryCache)
         {
             _cache = memoryCache;
-            _settings = appSettings.Value;
         }
 
 
@@ -101,8 +99,8 @@ namespace AzInfoApi.Controllers
             foreach (var operation in operations)
             {
                 var operationAllInstances = all.Where(el => el.Operation == operation.Operation).ToList();
-                operation.DataCenter = operationAllInstances.Select(el => el.DataCenter).Aggregate((a, b) => a + ";" + b);
-                operation.ApiVersion = operationAllInstances.Select(el => el.ApiVersion).Aggregate((a, b) => a + ";" + b);
+                operation.DataCenter = operationAllInstances.Select(el => el.DataCenter).Distinct().Aggregate((a, b) => a + ";" + b);
+                operation.ApiVersion = operationAllInstances.Select(el => el.ApiVersion).Distinct().Aggregate((a, b) => a + ";" + b);
             }
             operations = operations.OrderBy(el => el.Operation).ToList();
 
@@ -183,17 +181,77 @@ namespace AzInfoApi.Controllers
         [HttpGet]
         public string UpdateOperations([FromQuery] string key)
         {
-            if (key != _settings.updateKey)
+            if (key != Environment.GetEnvironmentVariable("AZINFO_UPDATEKEY"))
                 return "Wrong update key";
 
             string ExtractPath = "extracted";
 
             var swaggerOperationsDownloadTask = RetrieveAllOperationFromSwaggerDefinitions(ExtractPath);
-            var providersInfo = GetProvidersInformation(_settings);
+            var providersInfo = GetProvidersInformation(new AppSettings("AZINFO"));
             List<ApiInfo> allOperations = swaggerOperationsDownloadTask.Result;
             List<ApiInfo> results = new List<ApiInfo>(1000);
-            var providers = providersInfo.value.Values<dynamic>() as IEnumerable<dynamic>;
 
+            MergeProvidersAndOperationsIntoResults(providersInfo, allOperations, results);
+
+            if(Environment.GetEnvironmentVariable("AZINFOCN_AUTHORIZATIONENDPOINT")!=null)
+            {
+                var providersInfoChina = GetProvidersInformation(new AppSettings("AZINFOCN"));
+                MergeProvidersAndOperationsIntoResults(providersInfoChina, allOperations, results);
+            }
+            if (Environment.GetEnvironmentVariable("AZINFODE_AUTHORIZATIONENDPOINT") != null)
+            {
+                var providersInfoGermany = GetProvidersInformation(new AppSettings("AZINFODE"));
+                MergeProvidersAndOperationsIntoResults(providersInfoGermany, allOperations, results);
+            }
+
+            //results = results.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.Provider + "/" + a.ResourceType + ":" + a.Operation)).ToList();
+
+            try
+            {
+                System.IO.File.Delete("getOperations.json");
+                //save result
+                using (var fs = System.IO.File.CreateText("getOperations.json"))
+                {
+                    Newtonsoft.Json.JsonSerializer.Create().Serialize(fs, results);
+                }
+            }
+            catch (Exception ex)
+            {
+
+                _tracer.TraceEvent(TraceEventType.Error, 1, ex.ToString());
+            }
+
+            if (Directory.Exists("D:\\home"))
+            {
+                try
+                {
+                    System.IO.File.Delete("D:\\home\\site\\wwwroot\\getOperations.json");
+                    //save result
+                    using (var fs = System.IO.File.CreateText("D:\\home\\site\\wwwroot\\getOperations.json"))
+                    {
+                        Newtonsoft.Json.JsonSerializer.Create().Serialize(fs, results);
+                    }
+                }
+                catch (Exception ex)
+                {
+
+                    _tracer.TraceEvent(TraceEventType.Error, 2, ex.ToString());
+                }
+            }
+            _cache.Remove("ApiInfoList");
+
+            try
+            {
+                Directory.Delete(ExtractPath, true);
+            }
+            catch { }
+
+            return "Update succeeded";
+        }
+
+        private void MergeProvidersAndOperationsIntoResults(dynamic providersInfo, List<ApiInfo> allOperations, List<ApiInfo> results)
+        {
+            var providers = providersInfo.value.Values<dynamic>() as IEnumerable<dynamic>;
             providers.AsParallel().ForAll(provider =>
             {
                 var splitted = provider.id.ToString().Split(new char[] { '/' }) as IEnumerable<string>;
@@ -229,49 +287,6 @@ namespace AzInfoApi.Controllers
                     }
                 }
             });
-            //results = results.Distinct(LambdaEqualityComparer.Create<ApiInfo, string>(a => a.Provider + "/" + a.ResourceType + ":" + a.Operation)).ToList();
-
-            try
-            {
-                System.IO.File.Delete("getOperations.json");
-                //save result
-                using (var fs = System.IO.File.CreateText("getOperations.json"))
-                {
-                    Newtonsoft.Json.JsonSerializer.Create().Serialize(fs, results);
-                }
-            }
-            catch(Exception ex)
-            {
-                
-                _tracer.TraceEvent(TraceEventType.Error,1,ex.ToString());
-            }
-
-            if (Directory.Exists("D:\\home"))
-            {
-                try
-                {
-                    System.IO.File.Delete("D:\\home\\site\\wwwroot\\getOperations.json");
-                    //save result
-                    using (var fs = System.IO.File.CreateText("D:\\home\\site\\wwwroot\\getOperations.json"))
-                    {
-                        Newtonsoft.Json.JsonSerializer.Create().Serialize(fs, results);
-                    }
-                }
-                catch (Exception ex)
-                {
-
-                    _tracer.TraceEvent(TraceEventType.Error, 2, ex.ToString());
-                }
-            }
-            _cache.Remove("ApiInfoList");
-
-            try
-            {
-                Directory.Delete(ExtractPath, true);
-            }
-            catch { }
-
-            return "Update succeeded";
         }
 
         private static void AddNewResults(List<ApiInfo> results, string providerName, dynamic resourceType, string apiVersionString, List<ApiInfo> operations, string datacenterName)
@@ -289,7 +304,8 @@ namespace AzInfoApi.Controllers
                         Operation = el.Operation,
                         Provider = providerName,
                         ResourceType = resourceType,
-                        Verb = el.Verb
+                        Verb = el.Verb,
+                        OperationDetails=el.OperationDetails
                     });
                 }
             }
@@ -301,7 +317,7 @@ namespace AzInfoApi.Controllers
                     DataCenter = datacenterName,
                     Operation = $"/subscriptions/providers/{providerName}/{resourceType}",
                     Provider = providerName,
-                    ResourceType = resourceType,
+                    ResourceType = resourceType,                    
                     Verb = "get"
                 });
             }
@@ -382,16 +398,16 @@ namespace AzInfoApi.Controllers
 
         private static dynamic GetProvidersInformation(AppSettings appSettings)
         {
-            var token = AzExport.Helpers.GetAccessToken(appSettings.clientId, appSettings.clientSecret, appSettings.authorizationEndpoint);
+            var token = AzExport.Helpers.GetAccessToken(appSettings.clientId, appSettings.clientSecret, appSettings.authorizationEndpoint.TrimEnd('/')+"/" + appSettings.tenantId + "/",appSettings.managementApi.TrimEnd('/')+"/");
             //detect datacenters
-            Uri uri = new Uri($"https://management.azure.com/subscriptions/{appSettings.subscriptionId}/providers?api-version=2016-09-01");
+            Uri uri = new Uri($"{appSettings.managementApi}/subscriptions/{appSettings.subscriptionId}/providers?api-version={appSettings.providersApiVersion}");
 
             // Create the request
             var httpWebRequest = (HttpWebRequest)WebRequest.Create(uri);
             httpWebRequest.Method = "get";
             httpWebRequest.Headers[HttpRequestHeader.Authorization] = "Bearer " + token;
             httpWebRequest.Headers[HttpRequestHeader.UserAgent] = "AzurePowershell/v3.6.0.0 PSVersion/v5.1.14393.693";
-            httpWebRequest.Headers[HttpRequestHeader.Host] = "management.azure.com";
+         //   httpWebRequest.Headers[HttpRequestHeader.Host] = "management.azure.com";
 
             var response = httpWebRequest.GetResponseAsync().Result;
             string providersInfo;
@@ -400,6 +416,6 @@ namespace AzInfoApi.Controllers
                 providersInfo = responseStream.ReadToEnd();
             }
             return JObject.Parse(providersInfo);
-        }
+        }        
     }
 }

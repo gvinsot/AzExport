@@ -1,1 +1,5 @@
-﻿<span class="list-group-item" style="margin:0px" data-binding="{Operation}"></span>
+﻿<div class="list-group-item" >
+    <span onmousemove="$('#overlayZone').css({ top: event.pageY+5, left: event.pageX+5});" onmouseout="$('#overlayZone').hide();" onmouseover="SS.PropagateDataContext(this, 'overlayZone');$('#overlayZone').css({ top: event.pageY+5, left: event.pageX+5}); $('#overlayZone').show();" style="margin:0px" data-binding="{Operation}"></span>
+
+    <a href="#" style=" float:right"> <img onclick="SS.PropagateDataContext(this, 'popupZone'); $('#popupZone').show();" style="width:16px;height:16px;" src="images/details.png" /></a>
+</div>

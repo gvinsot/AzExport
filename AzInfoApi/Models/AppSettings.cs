@@ -7,11 +7,22 @@ namespace AzInfoApi.Models
 {
     public class AppSettings
     {
-        public string updateKey = Environment.GetEnvironmentVariable("AZINFO_UPDATEKEY");
-        public string tenantId = Environment.GetEnvironmentVariable("AZINFO_TENANTID");
-        public string authorizationEndpoint= "https://login.microsoftonline.com/"+ Environment.GetEnvironmentVariable("AZINFO_TENANTID") + "/";
-        public string clientId= Environment.GetEnvironmentVariable("AZINFO_CLIENTID");
-        public string clientSecret = Environment.GetEnvironmentVariable("AZINFO_CLIENTSECRET");
-        public string subscriptionId= Environment.GetEnvironmentVariable("AZINFO_SUBSCRIPTIONID");
+        public AppSettings(string prefix="AZINFO")
+        {
+            providersApiVersion = Environment.GetEnvironmentVariable(prefix + "_PROVIDERSAPIVERSION");
+            tenantId = Environment.GetEnvironmentVariable(prefix+"_TENANTID");
+            authorizationEndpoint = Environment.GetEnvironmentVariable(prefix+"_AUTHORIZATIONENDPOINT");
+            managementApi = Environment.GetEnvironmentVariable(prefix+"_MANAGEMENTAPI");
+            clientId = Environment.GetEnvironmentVariable(prefix+"_CLIENTID");
+            clientSecret = Environment.GetEnvironmentVariable(prefix+"_CLIENTSECRET");
+            subscriptionId = Environment.GetEnvironmentVariable(prefix+"_SUBSCRIPTIONID");
+        }
+        public string providersApiVersion;
+        public string tenantId;
+        public string authorizationEndpoint;
+        public string managementApi;        
+        public string clientId;
+        public string clientSecret;
+        public string subscriptionId;
     }
 }

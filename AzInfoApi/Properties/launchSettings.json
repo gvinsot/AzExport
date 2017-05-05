@@ -20,7 +20,15 @@
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "AZINFO_UPDATEKEY": "43211234",
+        "AZINFO_MANAGEMENTAPI": "https://management.azure.com",
+        "AZINFO_AUTHORIZATIONENPOINT": "https://login.windowsazure.net",
+        "AZINFO_CLIENTSECRET": "AOyplubQuKPQWoIn4fvQmIlf+lOCjkWQALR2Z5srkOY=",
+        "AZINFO_SUBSCRIPTIONID": "318e1b85-66c8-401b-bb24-2ede0d8778b0",
+        "AZINFO_PROVIDERSAPIVERSION": "2016-09-01",
+        "AZINFO_TENANTID": "1af78158-a0d2-4287-afe9-02272cded0b6",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AZINFO_CLIENTID": "22973c0e-7792-4313-8d3b-3910a3c67498"
       },
       "applicationUrl": "http://localhost:3865"
     }

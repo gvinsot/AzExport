@@ -22,76 +22,88 @@ namespace AzExport
         
         static void Main(string[] args)
         {
-            Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.dll");
-            Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll");
-            Helpers.LoadEmbbededAssembly("AzExport.Microsoft.WindowsAzure.Configuration.dll");
-            Helpers.LoadEmbbededAssembly("AzExport.Newtonsoft.Json.dll");
-
-
-            string downloadPath = ".\\";
-            bool zipResult = false;
-            string clientId = ConfigurationManager.AppSettings["AAD_ApplicationId"];
-            string clientSecret = ConfigurationManager.AppSettings["AAD_ApplicationSecret"];
-            string subscriptionId = ConfigurationManager.AppSettings["SubscriptionId"];
-            string authorizationEndpoint = "https://login.microsoftonline.com/"+ ConfigurationManager.AppSettings["AAD_TenantId"] + "/";
-
-            if (args.Count() % 2 != 0)
+            try
             {
-                OutputHelp();
-                return;
-            }
+                Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.dll");
+                Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll");
+                Helpers.LoadEmbbededAssembly("AzExport.Microsoft.WindowsAzure.Configuration.dll");
+                Helpers.LoadEmbbededAssembly("AzExport.Newtonsoft.Json.dll");
 
-            for(int i=0;i<args.Count();i+=2)
-            {
-                string arg = args[i];
-                string value = args[i + 1];
-                switch(arg)
+
+                string downloadPath = ".\\";
+                bool zipResult = false;
+                string clientId = ConfigurationManager.AppSettings["AAD_ApplicationId"];
+                string clientSecret = ConfigurationManager.AppSettings["AAD_ApplicationSecret"];
+                string tenantId = ConfigurationManager.AppSettings["AAD_TenantId"];
+                string subscriptionId = ConfigurationManager.AppSettings["SubscriptionId"];
+                string authorizationEndpoint = ConfigurationManager.AppSettings["AuthorizationEndpoint"];
+                string managementApi = ConfigurationManager.AppSettings["ManagementApi"];
+
+                if (args.Count() % 2 != 0)
                 {
-                    case "-ClientId":
-                        clientId = value;
-                        break;
-                    case "-ClientSecret":
-                        clientId = value;
-                        break;
-                    case "-AuthorizationEndpoint":
-                        authorizationEndpoint = value;
-                        break;
-                    case "-SubscriptionId":
-                        subscriptionId = value;
-                        break;
-                    case "-DownloadPath":
-                        downloadPath = value;
-                        break;
-                    case "-ZipResult":
-                        zipResult = bool.TrueString.ToLower() == value.ToLower();
-                        break;
+                    OutputHelp();
+                    return;
                 }
+
+                for (int i = 0; i < args.Count(); i += 2)
+                {
+                    string arg = args[i];
+                    string value = args[i + 1];
+                    switch (arg)
+                    {
+                        case "-ClientId":
+                            clientId = value;
+                            break;
+                        case "-ClientSecret":
+                            clientId = value;
+                            break;
+                        case "-TenantId":
+                            tenantId = value;
+                            break;
+                        case "-AuthorizationEndpoint":
+                            authorizationEndpoint = value;
+                            break;
+                        case "-SubscriptionId":
+                            subscriptionId = value;
+                            break;
+                        case "-DownloadPath":
+                            downloadPath = value;
+                            break;
+                        case "-ZipResult":
+                            zipResult = bool.TrueString.ToLower() == value.ToLower();
+                            break;
+                    }
+                }
+
+
+                if (String.IsNullOrEmpty(clientId) || String.IsNullOrEmpty(clientSecret) || String.IsNullOrEmpty(subscriptionId) || String.IsNullOrEmpty(authorizationEndpoint))
+                {
+                    OutputHelp();
+                    return;
+                }
+
+                AzSubRetriever retriever = new AzSubRetriever(clientId, clientSecret,tenantId, authorizationEndpoint, managementApi);
+                if (downloadPath != null)
+                {
+                    retriever.FileDownloadPath = downloadPath;
+                }
+
+                retriever.RetrieveAllResourcesViaRG(subscriptionId, true, zipResult);
+
+                Console.WriteLine("All data retrieved.... press a enter to exit.");
+                Console.ReadLine();
             }
-
-
-            if (String.IsNullOrEmpty(clientId) || String.IsNullOrEmpty(clientSecret) || String.IsNullOrEmpty(subscriptionId) || String.IsNullOrEmpty(authorizationEndpoint))
+            catch(Exception ex)
             {
-                OutputHelp();
-                return;
+                Console.WriteLine(ex.Message);
             }
-
-            AzSubRetriever retriever = new AzSubRetriever(clientId, clientSecret, authorizationEndpoint);
-            if (downloadPath != null)
-            {
-                retriever.FileDownloadPath = downloadPath;
-            }
-
-            retriever.RetrieveAllResourcesViaRG(subscriptionId, true, zipResult); 
-
-            Console.WriteLine("All data retrieved.... press a enter to exit.");
-            Console.ReadLine();
         }
 
         static void OutputHelp()
         {
             Console.WriteLine("Bad Arguments");
             Console.WriteLine("Usage:");
-            Console.WriteLine("AzExport -ClientId <client id> -ClientSecret <client secret> -AuthorizationEndpoint <https://login.microsoftonline.com/{Azure AD tenant ID}/> -SubscriptionId <subscription id> [-DownloadPath <D:\\temp\\>] [-ZipResult true]");
+            Console.WriteLine("AzExport -ClientId <client id> -ClientSecret <client secret> -TenantId <Azure AD tenant ID> -SubscriptionId <subscription id> [-DownloadPath <D:\\temp\\>] [-ZipResult true]  -AuthorizationEndpoint <https://login.microsoftonline.com/> -ManagementApi <https://management.core.windows.net/>");
         }
 
     }

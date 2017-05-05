@@ -69,9 +69,9 @@ namespace AzImport
                 return;
             }
 
-            AzResourceGroupImporter importer = new AzResourceGroupImporter(clientId, clientSecret, authorizationEndpoint);
+            //AzResourceGroupImporter importer = new AzResourceGroupImporter(clientId, clientSecret, authorizationEndpoint);
 
-            importer.ImportResourceGroup(sourcePath, destinationSubscriptionId);
+            //importer.ImportResourceGroup(sourcePath, destinationSubscriptionId);
 
             Console.WriteLine("Resource group imported.... press a enter to exit.");
             Console.ReadLine();
