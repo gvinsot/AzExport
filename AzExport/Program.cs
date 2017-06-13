@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Configuration;
-using System.Reflection;
-using System.IO;
+using AzImportExportLibrary;
 
 /*
  * Sample Code is provided for the purpose of illustration only and is not intended to be used in a production environment. 
@@ -24,10 +23,10 @@ namespace AzExport
         {
             try
             {
-                Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.dll");
-                Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll");
-                Helpers.LoadEmbbededAssembly("AzExport.Microsoft.WindowsAzure.Configuration.dll");
-                Helpers.LoadEmbbededAssembly("AzExport.Newtonsoft.Json.dll");
+                //Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.dll");
+                //Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll");
+                //Helpers.LoadEmbbededAssembly("AzExport.Microsoft.WindowsAzure.Configuration.dll");
+                //Helpers.LoadEmbbededAssembly("AzExport.Newtonsoft.Json.dll");
 
 
                 string downloadPath = ".\\";
@@ -82,21 +81,19 @@ namespace AzExport
                     return;
                 }
 
-                AzSubRetriever retriever = new AzSubRetriever(clientId, clientSecret,tenantId, authorizationEndpoint, managementApi);
-                if (downloadPath != null)
-                {
-                    retriever.FileDownloadPath = downloadPath;
-                }
+ 
+                AzSubscriptionExport retriever = new AzSubscriptionExport(clientId, clientSecret,tenantId, authorizationEndpoint, managementApi, downloadPath);
 
-                retriever.RetrieveAllResourcesViaRG(subscriptionId, true, zipResult);
+                retriever.ExportAllResourceGroups(subscriptionId, true, zipResult);
 
                 Console.WriteLine("All data retrieved.... press a enter to exit.");
-                Console.ReadLine();
+
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
+            Console.ReadLine();
         }
 
         static void OutputHelp()

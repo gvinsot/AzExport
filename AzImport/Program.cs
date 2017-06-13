@@ -1,8 +1,10 @@
-﻿using AzExport;
+﻿using AzImportExportLibrary;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,18 +14,16 @@ namespace AzImport
     {
         static void Main(string[] args)
         {
-            Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.dll");
-            Helpers.LoadEmbbededAssembly("AzExport.Microsoft.IdentityModel.Clients.ActiveDirectory.Platform.dll");
-            Helpers.LoadEmbbededAssembly("AzExport.Microsoft.WindowsAzure.Configuration.dll");
-            Helpers.LoadEmbbededAssembly("AzExport.Newtonsoft.Json.dll");
-
-            string sourcePath = ".\\";
+            string sourcePath = null;
             string clientId = ConfigurationManager.AppSettings["AAD_ApplicationId"];
             string clientSecret = ConfigurationManager.AppSettings["AAD_ApplicationSecret"];
+            string tenantId = ConfigurationManager.AppSettings["AAD_TenantId"];           
             string destinationSubscriptionId = ConfigurationManager.AppSettings["DestinationSubscriptionId"];
             string sourceSubscriptionId = ConfigurationManager.AppSettings["SourceSubscriptionId"];
-            string authorizationEndpoint = "https://login.microsoftonline.com/" + ConfigurationManager.AppSettings["AAD_TenantId"] + "/";
-            string resourceGroupName = null;
+            string authorizationEndpoint = ConfigurationManager.AppSettings["AuthorizationEndpoint"];
+            string managementApi = ConfigurationManager.AppSettings["ManagementApi"];
+            string sourceResourceGroupName = ConfigurationManager.AppSettings["SourceResourceGroupName"];
+            string destinationResourceGroupName = ConfigurationManager.AppSettings["DestinationResourceGroupName"];
 
             if (args.Count() % 2 != 0)
             {
@@ -52,8 +52,11 @@ namespace AzImport
                     case "-AuthorizationEndpoint":
                         authorizationEndpoint = value;
                         break;
-                    case "-ResourceGroupName":
-                        resourceGroupName = value;
+                    case "-SourceResourceGroupName":
+                        sourceResourceGroupName = value;
+                        break;
+                    case "-DestinationResourceGroupName":
+                        destinationResourceGroupName = value;
                         break;
                     case "-SourcePath":
                         sourcePath = value;
@@ -69,9 +72,11 @@ namespace AzImport
                 return;
             }
 
-            //AzResourceGroupImporter importer = new AzResourceGroupImporter(clientId, clientSecret, authorizationEndpoint);
 
-            //importer.ImportResourceGroup(sourcePath, destinationSubscriptionId);
+
+            AzSubscriptionImport retriever = new AzSubscriptionImport(clientId, clientSecret, tenantId, authorizationEndpoint, managementApi, sourcePath);
+
+            retriever.ImportAllResourceGroups(sourceSubscriptionId,destinationSubscriptionId);
 
             Console.WriteLine("Resource group imported.... press a enter to exit.");
             Console.ReadLine();

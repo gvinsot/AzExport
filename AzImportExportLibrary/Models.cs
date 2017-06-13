@@ -10,7 +10,7 @@
  */
 
 
-namespace AzExport
+namespace AzImportExportLibrary
 {
     public enum JobTypes
     {
@@ -23,5 +23,14 @@ namespace AzExport
         public string ExportedResourceId;
         public string JobResultOutput;
 
+    }
+
+    public class ImportExportConfiguration
+    {
+        public string AccessToken { get; set; }
+        public string ManagementApiUrl { get; set; }
+        public string RootFilePath { get; set; }
+        public bool SaveToDisk { get; set; }
+        public string ProvidersVersion { get; set; }
     }
 }
