@@ -44,7 +44,7 @@ namespace AzImportExportLibrary
                 System.Console.WriteLine(resources.Count() + " resources in " + rg.name);
 
                 // Export template
-                Helpers.GetAzureResource(result, rg.id.Value + "/exportTemplate", _config, _config.ProvidersVersion, "POST", "{\"resources\":[\"*\"]}");
+                Helpers.GetAzureResource(result, rg.id.Value + "/exportTemplate", _config, _config.ProvidersVersion, "POST", "{\"options\": \"IncludeParameterDefaultValue\",\"resources\": [\"*\"]}");
                 //
 
                 resources.AsParallel().ForAll(res =>
