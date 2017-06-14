@@ -41,7 +41,7 @@ namespace AzImportExportLibrary
                 dynamic resourcesResult = Helpers.GetAzureResource(result, rg.id.Value + "/resources", _config, _config.ProvidersVersion);
                 var resources = resourcesResult.value.Values<dynamic>() as IEnumerable<dynamic>;
 
-                System.Console.WriteLine(resources.Count() + " resources in " + rg.name);
+                Console.WriteLine(resources.Count() + " resources in " + rg.name);
 
                 // Export template
                 Helpers.GetAzureResource(result, rg.id.Value + "/exportTemplate", _config, _config.ProvidersVersion, "POST", "{\"options\": \"IncludeParameterDefaultValue\",\"resources\": [\"*\"]}");
@@ -138,7 +138,7 @@ namespace AzImportExportLibrary
                                 JobType = JobTypes.IoTDevicesExport,
                                 JobRequestUrl = _config.ManagementApiUrl + resId + "/jobs/" + job.jobId + "?api-version=" + apiVersion,
                                 JobResultOutput = containerSasUri.Split('?').First() + "/devices.txt",
-                                ExportedResourceId = resId + "/exportDevices"
+                                ResourceId = resId + "/exportDevices"
                             });
                         }
                     }
@@ -217,7 +217,7 @@ namespace AzImportExportLibrary
                                     Thread.Sleep(1000);
                                 }
                                 string resultDevices = (new WebClient()).DownloadString(job.JobResultOutput);
-                                Helpers.SaveResultToFile(_config.RootFilePath, job.ExportedResourceId, resultDevices, "result");
+                                Helpers.SaveResultToFile(_config.RootFilePath, job.ResourceId, resultDevices, "result");
                                 break;
 
                             //TODO : Add other asynchronous job to check
@@ -228,7 +228,7 @@ namespace AzImportExportLibrary
                     }
                     catch (Exception ex)
                     {
-                        Console.Error.WriteLine("Error retrieving job output for " + job.ExportedResourceId + " : " + ex.Message);
+                        Console.Error.WriteLine("Error retrieving job output for " + job.ResourceId + " : " + ex.Message);
                     }
                 });
             }

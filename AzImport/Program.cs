@@ -60,6 +60,7 @@ namespace AzImport
                         break;
                     case "-SourcePath":
                         sourcePath = value;
+                        //root directory containing the subscriptions folder
                         break;
 
                 }
@@ -78,7 +79,7 @@ namespace AzImport
 
             retriever.ImportAllResourceGroups(sourceSubscriptionId,destinationSubscriptionId);
 
-            Console.WriteLine("Resource group imported.... press a enter to exit.");
+            Console.WriteLine("IMPORTS COMPLETED.... press a enter to exit.");
             Console.ReadLine();
         }
 

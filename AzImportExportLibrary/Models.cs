@@ -14,13 +14,14 @@ namespace AzImportExportLibrary
 {
     public enum JobTypes
     {
-        IoTDevicesExport    
+        IoTDevicesExport,
+        ResourceGroupTemplateImport
     }
     public class JobModel
     {
         public JobTypes JobType;
         public string JobRequestUrl;
-        public string ExportedResourceId;
+        public string ResourceId;
         public string JobResultOutput;
 
     }

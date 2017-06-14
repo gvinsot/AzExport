@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzImport", "AzImport\AzImpo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzInfoApi", "AzInfoApi\AzInfoApi.csproj", "{773D2828-5AD0-4452-9598-94B90902C382}"
 EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{BDD16DD3-CD91-4F4C-9412-3076145F55F9}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzImportExportLibrary", "AzImportExportLibrary\AzImportExportLibrary.csproj", "{8330F03F-12B8-4181-BB66-09B0F33ECB8E}"
 EndProject
 Global
@@ -31,10 +29,6 @@ Global
 		{773D2828-5AD0-4452-9598-94B90902C382}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{773D2828-5AD0-4452-9598-94B90902C382}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{773D2828-5AD0-4452-9598-94B90902C382}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BDD16DD3-CD91-4F4C-9412-3076145F55F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BDD16DD3-CD91-4F4C-9412-3076145F55F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BDD16DD3-CD91-4F4C-9412-3076145F55F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BDD16DD3-CD91-4F4C-9412-3076145F55F9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{8330F03F-12B8-4181-BB66-09B0F33ECB8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8330F03F-12B8-4181-BB66-09B0F33ECB8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8330F03F-12B8-4181-BB66-09B0F33ECB8E}.Release|Any CPU.ActiveCfg = Release|Any CPU

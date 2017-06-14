@@ -45,25 +45,35 @@ namespace AzImportExportLibrary
         {
             try
             {
-                string sourceFile = config.RootFilePath+"\\"+ resourceId.Replace("/","\\")+ (apiVersion == null ? "" : ("-" + apiVersion))+".json";
+                string sourceFile = config.RootFilePath+resourceId.Replace("/","\\")+ (apiVersion == null ? "" : ("@" + apiVersion))+".json";
                 string resultString = File.ReadAllText(sourceFile);
 
-                dynamic result = JObject.Parse(resultString);
-                
-                return result;
+                if (resultString.StartsWith("["))
+                {
+                    dynamic result = JArray.Parse(resultString);
+                    return result;
+                }
+                else
+                {
+                    dynamic result = JObject.Parse(resultString);
+
+                    return result;
+                }
             }
             catch (Exception ex)
             {
                 return null;
             }
         }
-        public static void PutAzureResource(string resourceId, ImportExportConfiguration config, dynamic toSend, string apiVersion = null, string method = "PUT" )
+
+        public static dynamic PutAzureResource(string resourceId, ImportExportConfiguration config, dynamic toSend, string apiVersion = null, string method = "PUT" )
         {
             if (apiVersion == null)
                 apiVersion = config.ProvidersVersion;
             string jsonToPost = JsonConvert.SerializeObject(toSend);
             Dictionary <string, dynamic> results = new Dictionary<string, dynamic>();
-            GetAzureResource(results, resourceId, config, apiVersion, method, jsonToPost);
+            dynamic result = GetAzureResource(results, resourceId, config, apiVersion, method, jsonToPost);
+            return result;
         }
 
         public static dynamic GetAzureResource(Dictionary<string, dynamic> results, string resourceId, ImportExportConfiguration config, string apiVersion = null, string method = "GET", string postContent = "")
@@ -173,7 +183,7 @@ namespace AzImportExportLibrary
 
         public static void SaveResultToFile(string rootPath, string resourceId, string resultString, string apiVersion = "NA")
         {
-            string filePath = rootPath + resourceId.Replace("/", "\\").Replace("?", "_").Replace(" ", "_") + "-" + apiVersion + ".json";
+            string filePath = rootPath + resourceId.Replace("/", "\\").Replace("?", "_").Replace(" ", "_") + "@" + apiVersion + ".json";
 
             string fileDir = Path.GetDirectoryName(filePath);
             if (!Directory.Exists(fileDir))
@@ -182,11 +192,11 @@ namespace AzImportExportLibrary
             File.WriteAllText(filePath, resultString);
         }
 
-        public static dynamic GetAzureResourceAutoFindVersion(Dictionary<string, dynamic> results, string resourceId, Dictionary<string, ProviderInformation> resourcesInformations, ImportExportConfiguration config , string method = "GET", string postContent = "")
+        public static dynamic GetAzureResourceAutoFindVersion(Dictionary<string, dynamic> results, string resourceId, Dictionary<string, ProviderInformation> resourcesInformations, ImportExportConfiguration config , string defaultVersion, string method = "GET", string postContent = "")
         {
             try
             {
-                string apiVersion = null;
+                string apiVersion = defaultVersion;
                 if (resourcesInformations.ContainsKey(resourceId.ToLower()))
                     apiVersion = resourcesInformations[resourceId.ToLower()].ApiVersion;
 

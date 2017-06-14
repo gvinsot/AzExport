@@ -108,61 +108,80 @@ namespace AzImportExportLibrary
                     {
                         resourcesInformation.Add(resourceTypeKey, new ProviderInformation()
                         {
-                            ApiVersion = (resourceType.apiVersions.Values<dynamic>() as IEnumerable<dynamic>).First().Value,
-                            Name = resourceTypeKey,
-                            Namespace = provider.@namespace.ToString()
+                            ApiVersion = (resourceType.apiVersions.Values<dynamic>() as IEnumerable<dynamic>).First().Value
                         });
                     }
                 }
-                try
-                {
-                    var providerDetails = Helpers.GetAzureResource(result, "/providers/Microsoft.Authorization/providerOperations/" + provider.@namespace.ToString(), _config, _config.ProvidersVersion+"&$expand=resourceTypes");
-                    var resourceTypesDetails = providerDetails.resourceTypes.Values<dynamic>() as IEnumerable<dynamic>;
+                //try
+                //{
+                //    var providerDetails = Helpers.GetAzureResource(result, "/providers/Microsoft.Authorization/providerOperations/" + provider.@namespace.ToString(), _config, "2015-07-01&$expand=resourceTypes");
+                //    var resourceTypesDetails = providerDetails.resourceTypes.Values<dynamic>() as IEnumerable<dynamic>;
 
-                    foreach (var resourceTypeDetail in resourceTypesDetails)
-                    {
-                        var operations = resourceTypeDetail.operations.Values<dynamic>() as IEnumerable<dynamic>;
-                        foreach (var operation in operations)
-                        {
-                            var operationDetails = (operation.name.Value as string).Split('/');
-                            if (operationDetails.Length > 3 && operationDetails.Last() == "read" && operationDetails[2]!="providers")
-                            {
-                                StringBuilder operationName = new StringBuilder();
-                                for (int i = 2; i < operationDetails.Length - 1; i++)
-                                {
-                                    operationName.Append("/").Append(operationDetails[i]);
-                                }
-                                var key = providersUrl + "/" + operationDetails[0].ToLower() + "/" + operationDetails[1].ToLower();
-                                if (resourcesInformation.ContainsKey(key))
-                                {
-                                    resourcesInformation[key].ReadOperations.Add(operationName.ToString());
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    //Trace.TraceError(ex.Message);
-                    //Console.WriteLine("WARNING: Cannot retrieve operations details for: " + provider.@namespace.ToString());
-                }
+                //    foreach (var resourceTypeDetail in resourceTypesDetails)
+                //    {
+                //        var operations = resourceTypeDetail.operations.Values<dynamic>() as IEnumerable<dynamic>;
+                //        foreach (var operation in operations)
+                //        {
+                //            var operationDetails = (operation.name.Value as string).Split('/');
+                //            if (operationDetails.Length > 3 && operationDetails.Last() == "read" && operationDetails[2]!="providers")
+                //            {
+                //                StringBuilder operationName = new StringBuilder();
+                //                for (int i = 2; i < operationDetails.Length - 1; i++)
+                //                {
+                //                    operationName.Append("/").Append(operationDetails[i]);
+                //                }
+                //                var key = providersUrl + "/" + operationDetails[0].ToLower() + "/" + operationDetails[1].ToLower();
+                //                if (resourcesInformation.ContainsKey(key))
+                //                {
+                //                    resourcesInformation[key].ReadOperations.Add(operationName.ToString());
+                //                }
+                //            }
+                //        }
+                //    }
+                //}
+                //catch (Exception ex)
+                //{
+                //    //Trace.TraceError(ex.Message);
+                //    Console.WriteLine("WARNING: Cannot retrieve operations details for: " + provider.@namespace.ToString());
+                //}
             });
             Console.WriteLine(resourcesInformation.Count() + " resource types");
             return resourcesInformation;
         }
 
-        private Dictionary<string, ProviderInformation> RetrieveProvidersInformationFromApi(Dictionary<string, dynamic> result, string accessToken, string providersUrl)
-        {
-            var apiClient = new AzInfoApiClient();
-            var apiVersions = apiClient.ApiVersionsGet();
+        //private Dictionary<string, ProviderInformation> RetrieveProvidersInformationFromApi(Dictionary<string, dynamic> result, string accessToken, string providersUrl)
+        //{
 
-            
-            //var operations = info.value.Values<dynamic>() as IEnumerable<dynamic>;
+        //    var apiClient = new AzInfoApiClient();
+        //    var providers = apiClient.ApiProvidersGet();
+        //    Dictionary<string, ProviderInformation> providersInfo = new Dictionary<string, ProviderInformation>();
 
-            //TODO : use this result to have a full view of available operations per resource type
+        //    foreach (var provider in providers)
+        //    {
+        //        var resourcetypes = apiClient.ApiResourcestypesGet(null, provider.Provider);
 
-            return null;
-        }
+        //        foreach (var resourceType in resourcetypes)
+        //        {
+        //            var operations = apiClient.ApiOperationsGet(null, null, provider.Provider, resourceType.ResourceType);
 
+        //            var grouped = operations.Where(el => el.Verb.Contains("get")).GroupBy(el=>el.ApiVersion);
+
+        //            foreach (var group in grouped)
+        //            {
+        //                string name = $"{provider.Provider.ToLower()}/{resourceType.ResourceType.ToLower()}";
+        //                providersInfo.Add(name, new ProviderInformation()
+        //                {
+        //                    ApiVersion = operation.ApiVersion,
+        //                    Name = name,
+        //                    ReadOperations = new List<string> { }
+        //                });
+        //                foreach (var operation in operations)
+        //                {
+                            
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
     }
 }

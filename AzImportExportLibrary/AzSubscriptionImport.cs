@@ -49,7 +49,22 @@ namespace AzImportExportLibrary
 
         public void ImportAllResourceGroups(string sourceSubscriptionId, string destinationSubscriptionId, bool unzipSource = false)
         {
-            #region retrieve all resources
+            dynamic resourceGroupsResult = Helpers.GetAzureResourceFromDisk($"/subscriptions/{sourceSubscriptionId}/resourcegroups", _config, _config.ProvidersVersion).value;
+            var resourceGroups = resourceGroupsResult.Values<dynamic>() as IEnumerable<dynamic>;
+
+            int countImports = Directory.EnumerateDirectories($"{_config.RootFilePath}\\subscriptions\\{sourceSubscriptionId}\\resourceGroups").Count();
+            Console.WriteLine("SUBSCRIPTION CONTAINS " + resourceGroups.Count() + " RESOURCE GROUPS, "+ countImports+" WILL BE IMPORTED");
+
+
+            AzResourceGroupImport importer = new AzResourceGroupImport(_config);
+            resourceGroups.AsParallel().ForAll(rg =>
+            {
+                importer.ImportResourceGroup(rg, destinationSubscriptionId, rg.name.Value);
+            });
+        }
+
+        public void ImportResourceGroupsAdditionalData(string sourceSubscriptionId, string destinationSubscriptionId, bool unzipSource = false)
+        {
             dynamic resourceGroupsResult = Helpers.GetAzureResourceFromDisk($"/subscriptions/{sourceSubscriptionId}/resourcegroups", _config, _config.ProvidersVersion).value;
             var resourceGroups = resourceGroupsResult.Values<dynamic>() as IEnumerable<dynamic>;
 
@@ -57,89 +72,10 @@ namespace AzImportExportLibrary
             AzResourceGroupImport importer = new AzResourceGroupImport(_config);
             resourceGroups.AsParallel().ForAll(rg =>
             {
-                importer.ImportResourceGroup(rg, destinationSubscriptionId, rg.name.Value);
+                importer.ImportResourceGroupAdditionalData(rg, destinationSubscriptionId, rg.name.Value);
             });
-
-            #endregion retrieve all resources
-
-            // importer.EnsureAllJobsTerminated();
         }
 
-        private Dictionary<string, ProviderInformation> RetrieveProvidersInformation(Dictionary<string, dynamic> result, string accessToken, string providersUrl)
-        {
-            dynamic providersResult = Helpers.GetAzureResource(result, providersUrl, _config,_config.ProvidersVersion);
-            var providers = providersResult.value.Values<dynamic>() as IEnumerable<dynamic>;
-
-            Console.WriteLine(providers.Count() + " resource providers");
-
-            Dictionary<string, ProviderInformation> resourcesInformation = new Dictionary<string, ProviderInformation>();
-            providers.AsParallel().ForAll(provider =>
-            {
-                string providerId = provider.id;
-                dynamic providersResourceTypes = provider.resourceTypes;
-                var resourceTypes = providersResourceTypes.Values<dynamic>() as IEnumerable<dynamic>; ;
-                foreach (var resourceType in resourceTypes)
-                {
-                    string resourceTypeKey = ($"{providerId}/{resourceType.resourceType}").ToLower();
-                    lock (resourcesInformation)
-                    {
-                        resourcesInformation.Add(resourceTypeKey, new ProviderInformation()
-                        {
-                            ApiVersion = (resourceType.apiVersions.Values<dynamic>() as IEnumerable<dynamic>).First().Value,
-                            Name = resourceTypeKey,
-                            Namespace = provider.@namespace.ToString()
-                        });
-                    }
-                }
-                try
-                {
-                    var providerDetails = Helpers.GetAzureResource(result, "/providers/Microsoft.Authorization/providerOperations/" + provider.@namespace.ToString(), _config, _config.ProvidersVersion+"&$expand=resourceTypes");
-                    var resourceTypesDetails = providerDetails.resourceTypes.Values<dynamic>() as IEnumerable<dynamic>;
-
-                    foreach (var resourceTypeDetail in resourceTypesDetails)
-                    {
-                        var operations = resourceTypeDetail.operations.Values<dynamic>() as IEnumerable<dynamic>;
-                        foreach (var operation in operations)
-                        {
-                            var operationDetails = (operation.name.Value as string).Split('/');
-                            if (operationDetails.Length > 3 && operationDetails.Last() == "read" && operationDetails[2]!="providers")
-                            {
-                                StringBuilder operationName = new StringBuilder();
-                                for (int i = 2; i < operationDetails.Length - 1; i++)
-                                {
-                                    operationName.Append("/").Append(operationDetails[i]);
-                                }
-                                var key = providersUrl + "/" + operationDetails[0].ToLower() + "/" + operationDetails[1].ToLower();
-                                if (resourcesInformation.ContainsKey(key))
-                                {
-                                    resourcesInformation[key].ReadOperations.Add(operationName.ToString());
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    //Trace.TraceError(ex.Message);
-                    //Console.WriteLine("WARNING: Cannot retrieve operations details for: " + provider.@namespace.ToString());
-                }
-            });
-            Console.WriteLine(resourcesInformation.Count() + " resource types");
-            return resourcesInformation;
-        }
-
-        private Dictionary<string, ProviderInformation> RetrieveProvidersInformationFromApi(Dictionary<string, dynamic> result, string accessToken, string providersUrl)
-        {
-            var apiClient = new AzInfoApiClient();
-            var apiVersions = apiClient.ApiVersionsGet();
-
-            
-            //var operations = info.value.Values<dynamic>() as IEnumerable<dynamic>;
-
-            //TODO : use this result to have a full view of available operations per resource type
-
-            return null;
-        }
-
+        
     }
 }

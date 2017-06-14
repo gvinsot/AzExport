@@ -66,7 +66,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\AzImportExportLibrary\AzImportExportLibrary.csproj">
+    <ProjectReference Include="..\AzImportExportLibrary\AzImportExportLibrary.csproj">
       <Project>{8330f03f-12b8-4181-bb66-09b0f33ecb8e}</Project>
       <Name>AzImportExportLibrary</Name>
     </ProjectReference>

@@ -1,8 +1,0 @@
-version: '2'
-
-services:
-  azinfoapi:
-    image: azinfoapi
-    build:
-      context: ./AzInfoApi
-      dockerfile: Dockerfile

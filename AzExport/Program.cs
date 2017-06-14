@@ -100,7 +100,7 @@ namespace AzExport
         {
             Console.WriteLine("Bad Arguments");
             Console.WriteLine("Usage:");
-            Console.WriteLine("AzExport -ClientId <client id> -ClientSecret <client secret> -TenantId <Azure AD tenant ID> -SubscriptionId <subscription id> [-DownloadPath <D:\\temp\\>] [-ZipResult true]  -AuthorizationEndpoint <https://login.microsoftonline.com/> -ManagementApi <https://management.core.windows.net/>");
+            Console.WriteLine("AzImport -ClientId <client id> -ClientSecret <client secret> -TenantId <Azure AD tenant ID> -SubscriptionId <subscription id> [-SourcePath <D:\\temp\\>] [-Unzip true]  -AuthorizationEndpoint <https://login.microsoftonline.com/> -ManagementApi <https://management.core.windows.net/>");
         }
 
     }

@@ -9,7 +9,6 @@ namespace AzImportExportLibrary
     public class ProviderInformation
     {
         public string Name;
-        public string Namespace;
         public string ApiVersion;
         public List<string> ReadOperations = new List<string>();
     }
