@@ -29,21 +29,24 @@ namespace AzImportExportLibrary
 
             dynamic createResourceGroup = new ExpandoObject();
             createResourceGroup.location = sourceRg.location;
+            string destinationResourceGroupId = $"/subscriptions/{destinationSubscriptionId}/resourcegroups/{destinationResourceGroupName}";
             try
-            {
-                Helpers.PutAzureResource($"/subscriptions/{destinationSubscriptionId}/resourcegroups/{destinationResourceGroupName}", _config, createResourceGroup);
-                Console.WriteLine("CREATED RESOURCE GROUP " + createResourceGroup.name);
+            { 
+                Helpers.PutAzureResource(destinationResourceGroupId, _config, createResourceGroup);
+                Console.WriteLine("CREATED/UPDATED RESOURCE GROUP " + destinationResourceGroupName);
             }
             catch
             {
                 //may be already existing and throw a conflict error
             }
 
-
             dynamic exportedTemplate = Helpers.GetAzureResourceFromDisk(sourceRg.id.Value + "/exportTemplate", _config, _config.ProvidersVersion);
 
             if (exportedTemplate == null)
                 return;
+
+            ApplySpecificChangesToTemplate(exportedTemplate,sourceRg.id.ToString(), destinationResourceGroupId);
+
 
             dynamic importRequest = new ExpandoObject();
             importRequest.properties = new ExpandoObject();
@@ -52,7 +55,7 @@ namespace AzImportExportLibrary
             string timestamp = DateTime.Now.Year.ToString() + DateTime.Now.Month + DateTime.Now.Day + DateTime.Now.Hour + DateTime.Now.Minute;
 
             Console.WriteLine("IMPORT OF TEMPLATE FOR " + sourceRg.name);
-            var jobUrl = $"/subscriptions/{destinationSubscriptionId}/resourcegroups/{destinationResourceGroupName}/providers/Microsoft.Resources/deployments/azimport{timestamp}";
+            var jobUrl = $"{destinationResourceGroupId}/providers/Microsoft.Resources/deployments/azimport{timestamp}";
 
             dynamic runningJob = Helpers.PutAzureResource(jobUrl, _config, importRequest);
 
@@ -60,20 +63,60 @@ namespace AzImportExportLibrary
             DateTime startTime = DateTime.Now;
             dynamic importJobState;
             bool timeout = false;
+            string provisionningState = null;
             do
             {
                 Thread.Sleep(5000);
                 importJobState = Helpers.GetRemoteJsonObject(_config.ManagementApiUrl + jobUrl+"?api-version="+_config.ProvidersVersion, _config.AccessToken);
                 timeout = (DateTime.Now - startTime) > TimeSpan.FromMinutes(180);
+                provisionningState = importJobState.properties.provisioningState.Value;
             }
-            while (importJobState.properties.provisioningState.Value != "Succeeded" && !timeout);
+            while (provisionningState != "Succeeded" && provisionningState != "Failed" && !timeout);
             #endregion
 
-            Console.WriteLine("SUCCESSFULLY IMPORTED TEMPLATE FOR " + sourceRg.name);
+            if (provisionningState == "Succeeded")
+                Console.WriteLine("SUCCESSFULLY IMPORTED TEMPLATE FOR " + sourceRg.name);
+            else
+                Console.WriteLine("COULD NOT IMPORT TEMPLATE FOR " + sourceRg.name + " : " + importJobState.properties?.error?.details?[0]?.message);
 
             ImportResourceGroupAdditionalData(sourceRg, destinationSubscriptionId, destinationResourceGroupName);
 
             Console.WriteLine("FINISHED IMPORT OF " + sourceRg.name);
+        }
+
+        private void ApplySpecificChangesToTemplate(dynamic exportedTemplate, string sourceRgId, string destRgId )
+        {
+            var parameters = (exportedTemplate.template.parameters as JObject).Properties().Select(el=>el.Name);
+
+            foreach(var parameter in parameters)
+            {
+                string defaultValue = exportedTemplate.template.parameters[parameter].defaultValue.ToString();
+                if (defaultValue.StartsWith(sourceRgId))
+                {
+                    defaultValue = defaultValue.Replace(sourceRgId, destRgId);
+                    exportedTemplate.template.parameters[parameter].defaultValue = defaultValue;
+                }
+            }
+
+            foreach(var resource in exportedTemplate.template.resources)
+            {
+                switch(resource.type.ToString())
+                {
+                    case "Microsoft.Network/loadBalancers":
+                        if((resource.properties.inboundNatPools as JArray).Count()!=0)
+                        {
+                            resource.properties.inboundNatRules = new JArray();
+                        }
+                        break;
+                    case "Microsoft.Compute/virtualMachineScaleSets":
+                        resource.properties.virtualMachineProfile.osProfile.adminPassword = _config.DefaultResourcePassword;
+                        break;
+                    case "Microsoft.Compute/virtualMachines":
+                        resource.properties.osProfile.adminPassword = _config.DefaultResourcePassword;
+                        break;
+                }
+            }
+                
         }
 
         public void ImportResourceGroupAdditionalData(dynamic sourceRg, string destinationSubscriptionId, string destinationResourceGroupName)
@@ -97,22 +140,23 @@ namespace AzImportExportLibrary
 
                 CleanUpResourceObject(resourceObject);
 
+                string resourceHint = destinationResourceId.ToLower().Split(new string[] { "/resourcegroups/" }, StringSplitOptions.None)[1];
                 try
                 {
                     try
                     {
-                        var resultObject = Helpers.PutAzureResource(resourceId, _config, resourceObject, apiVersion, "POST");
-                        Console.WriteLine("INJECTED : " + resourceId.ToLower().Split(new string[] { "/resourcegroups/" }, StringSplitOptions.None)[1]);
+                        var resultObject = Helpers.PutAzureResource(destinationResourceId, _config, resourceObject, apiVersion, "POST");
+                        Console.WriteLine("POST OK : " + resourceHint);
                     }
                     catch
                     {
-                        var resultObject = Helpers.PutAzureResource(resourceId, _config, resourceObject, apiVersion, "PUT");
-                        Console.WriteLine("INJECTED : " + resourceId.ToLower().Split(new string[] { "/resourcegroups/" }, StringSplitOptions.None)[1]);
+                        var resultObject = Helpers.PutAzureResource(destinationResourceId, _config, resourceObject, apiVersion, "PUT");
+                        Console.WriteLine("PUT  OK : " + resourceHint);
                     }
                 }
                 catch(Exception ex)
                 {
-                    Console.WriteLine("NOT INJECTED : "+ resourceId.ToLower().Split(new string[] { "/resourcegroups/" }, StringSplitOptions.None)[1]);
+                    Console.WriteLine("NOT INJECTED : "+ resourceHint);
                 }
             }
         }

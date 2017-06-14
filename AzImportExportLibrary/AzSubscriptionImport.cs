@@ -34,7 +34,7 @@ namespace AzImportExportLibrary
 
         ImportExportConfiguration _config = new ImportExportConfiguration();
 
-        public AzSubscriptionImport(string clientId, string clientSecret, string tenantId, string authorizationEndpoint= "https://login.microsoftonline.com/", string managementApi = "https://management.azure.com/", string downloadPath= null)
+        public AzSubscriptionImport(string clientId, string clientSecret, string tenantId, string defaultResourcePassword, string authorizationEndpoint= "https://login.microsoftonline.com/", string managementApi = "https://management.azure.com/", string rootPath= null)
         {
             _clientId = clientId;
             _clientSecret = clientSecret;
@@ -42,24 +42,32 @@ namespace AzImportExportLibrary
             _tenantId = tenantId;
 
             _config.ManagementApiUrl = managementApi;            
-            _config.RootFilePath = downloadPath!=null? downloadPath: Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase.Replace(@"file:///", ""));
+            _config.RootFilePath = rootPath!=null? rootPath: Path.GetDirectoryName(Assembly.GetExecutingAssembly().GetName().CodeBase.Replace(@"file:///", ""));
             _config.AccessToken = Helpers.GetAccessToken(_clientId, _clientSecret, _authorizationEndpoint+"/"+tenantId,managementApi);
             _config.ProvidersVersion = "2016-09-01";
+            _config.DefaultResourcePassword = defaultResourcePassword;
         }
 
         public void ImportAllResourceGroups(string sourceSubscriptionId, string destinationSubscriptionId, bool unzipSource = false)
         {
             dynamic resourceGroupsResult = Helpers.GetAzureResourceFromDisk($"/subscriptions/{sourceSubscriptionId}/resourcegroups", _config, _config.ProvidersVersion).value;
             var resourceGroups = resourceGroupsResult.Values<dynamic>() as IEnumerable<dynamic>;
+            var rgToImpport = resourceGroups.Where(el => Directory.Exists($"{_config.RootFilePath}\\subscriptions\\{sourceSubscriptionId}\\resourceGroups\\{el.name}")).ToList();
 
-            int countImports = Directory.EnumerateDirectories($"{_config.RootFilePath}\\subscriptions\\{sourceSubscriptionId}\\resourceGroups").Count();
-            Console.WriteLine("SUBSCRIPTION CONTAINS " + resourceGroups.Count() + " RESOURCE GROUPS, "+ countImports+" WILL BE IMPORTED");
+            Console.WriteLine("SUBSCRIPTION CONTAINS " + resourceGroups.Count() + " RESOURCE GROUPS, "+ rgToImpport.Count()+ " WILL BE IMPORTED");
 
-
+            
             AzResourceGroupImport importer = new AzResourceGroupImport(_config);
-            resourceGroups.AsParallel().ForAll(rg =>
+            rgToImpport.AsParallel().ForAll(rg =>
             {
-                importer.ImportResourceGroup(rg, destinationSubscriptionId, rg.name.Value);
+                try
+                {
+                    importer.ImportResourceGroup(rg, destinationSubscriptionId, rg.name.Value);
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine($"EXCEPTION IMPORTING {rg.name.Value} : {ex.Message}");
+                }
             });
         }
 

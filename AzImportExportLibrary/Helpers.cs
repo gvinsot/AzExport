@@ -46,6 +46,9 @@ namespace AzImportExportLibrary
             try
             {
                 string sourceFile = config.RootFilePath+resourceId.Replace("/","\\")+ (apiVersion == null ? "" : ("@" + apiVersion))+".json";
+                if (!File.Exists(sourceFile))
+                    return null;
+
                 string resultString = File.ReadAllText(sourceFile);
 
                 if (resultString.StartsWith("["))

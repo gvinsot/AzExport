@@ -33,5 +33,7 @@ namespace AzImportExportLibrary
         public string RootFilePath { get; set; }
         public bool SaveToDisk { get; set; }
         public string ProvidersVersion { get; set; }
+
+        public string DefaultResourcePassword { get; set; }
     }
 }
